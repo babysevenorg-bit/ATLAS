@@ -51,3 +51,6 @@ tool-results/
 .zscripts/dev.log
 .zscripts/dev.pid
 agent-ctx/
+
+# Vercel CLI local config
+.vercel/

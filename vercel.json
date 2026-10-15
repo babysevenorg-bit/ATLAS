@@ -1,0 +1,29 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "bun run build",
+  "installCommand": "bun install",
+  "devCommand": "bun run dev",
+  "github": {
+    "silent": true
+  },
+  "build": {
+    "env": {
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "functions": {
+    "src/app/api/coach/ask/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/cron/skill-decay/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/achievements/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/analytics/learning/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}

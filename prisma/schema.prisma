@@ -1,13 +1,15 @@
 // Prisma schema for Atlas Academy — Adaptive Forex & Binary Options Learning Platform
-// Mirrors the original Drizzle schema with SQLite-compatible types.
+// PostgreSQL-compatible (works on Vercel, Neon, Supabase, Railway).
+// JSON fields are stored as TEXT with manual JSON.stringify/parse for portability.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

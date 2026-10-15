@@ -63,26 +63,111 @@ Built with **Next.js 16 · TypeScript · Prisma · Tailwind CSS · shadcn/ui · 
 
 ### Prerequisites
 - Node.js 18+ or Bun
-- SQLite (bundled with the dev environment)
+- PostgreSQL database (local, Vercel Postgres, Neon, or Supabase)
 
 ### Install & run
 ```bash
 bun install
-bun run db:push    # Create SQLite database + schema
+
+# Create your .env file from the example
+cp .env.example .env
+# Edit .env to point at your Postgres database
+
+bun run db:push    # Create database schema
+bun run db:generate # Generate Prisma client
 bun run dev        # Start dev server on http://localhost:3000
 ```
 
-### Environment
-Create a `.env` file:
+### Environment variables
+See [`.env.example`](./.env.example) for the full reference. You need:
+- `DATABASE_URL` — Postgres connection string (pooled for Vercel)
+- `DIRECT_URL` — Non-pooled Postgres connection string (for migrations)
+
+---
+
+## Deploy to Vercel
+
+Atlas Academy is Vercel-ready. The repo includes `vercel.json`, a `postinstall` script that runs `prisma generate`, and a PostgreSQL-compatible Prisma schema.
+
+### Step 1 — Provision a Postgres database
+
+Pick one (all have free tiers):
+
+| Provider | Free tier | Setup |
+|----------|-----------|-------|
+| **Vercel Postgres** | Hobby plan | Vercel dashboard → Storage → Create Database → Postgres |
+| **Neon** (recommended) | 0.5 GB | https://neon.tech — create project, copy connection string |
+| **Supabase** | 500 MB | https://supabase.com — create project → Settings → Database → URI |
+
+### Step 2 — Set environment variables on Vercel
+
+In your Vercel project → **Settings → Environment Variables**, add:
+
+| Name | Value | Notes |
+|------|-------|-------|
+| `DATABASE_URL` | `postgresql://...?pgbouncer=true&connection_limit=1` | Pooled connection (for queries) |
+| `DIRECT_URL` | `postgresql://...` | Non-pooled connection (for migrations) |
+
+If using **Vercel Postgres**, Vercel auto-provides these when you link the database to your project. If using **Neon/Supabase**, set `DIRECT_URL` to the same string but without `?pgbouncer=true`.
+
+### Step 3 — Deploy
+
+```bash
+# Option A: Push to GitHub (Vercel auto-deploys on push)
+git push origin main
+
+# Option B: Vercel CLI
+npm i -g vercel
+vercel link
+vercel --prod
 ```
-DATABASE_URL=file:/home/z/my-project/db/custom.db
+
+### Step 4 — Run the database migration
+
+After the first deploy, push the schema to your Postgres database:
+
+```bash
+# Set DIRECT_URL in your local .env to the production database, then:
+bun run db:push
 ```
+
+Or use Vercel CLI:
+```bash
+vercel env pull .env.production.local
+bun run db:push
+```
+
+### Vercel-specific configuration in this repo
+
+- **`vercel.json`** — build commands, function timeouts (the LLM coach route gets 30s max duration), telemetry opt-out
+- **`postinstall` script** — runs `prisma generate` after `npm install` so the build can find the Prisma client
+- **`build` script** — runs `prisma generate && next build` (no standalone copy commands that break on Vercel)
+- **`next.config.ts`** — no `output: "standalone"` (Vercel handles output), `serverExternalPackages` for the `z-ai-web-dev-sdk`
+- **Prisma schema** — uses `postgresql` provider with both `url` (pooled) and `directUrl` (non-pooled) for serverless compatibility
+- **Prisma client** — singleton pattern with `globalThis` cache so warm serverless invocations reuse the connection
+
+### Troubleshooting Vercel deploy
+
+**"PrismaClientInitializationError: Can't reach database server"**
+→ Your `DATABASE_URL` isn't set on Vercel, or the connection string is wrong. Verify in Settings → Environment Variables.
+
+**"PrismaClientKnownRequestError: number of prepared statements exceeded"**
+→ You're using a pooled connection (`?pgbouncer=true`) without `DIRECT_URL`. Add `DIRECT_URL` as a non-pooled connection string.
+
+**Build fails with "Cannot find module '@prisma/client'"**
+→ The `postinstall` script didn't run. Add `"postinstall": "prisma generate"` to `package.json` (already done in this repo).
+
+**LLM Coach returns 500**
+→ The `z-ai-web-dev-sdk` may need network access to Z.ai servers. Ensure the function has `maxDuration: 30` (configured in `vercel.json`). If it still fails, the route has a built-in fallback to rule-based responses.
+
+**Cold start is slow**
+→ Prisma client generation on cold start can add 1-2s. This is expected for serverless. Warm invocations are fast (~50-200ms).
 
 ---
 
 ## Database schema
 
-12 Prisma models:
+16 Prisma models (PostgreSQL):
 - `User` — profiles, roles, onboarding, XP, streaks
 - `Session` — auth sessions
 - `Lesson` — curriculum content (drafts + published)

@@ -1,0 +1,226 @@
+// Prisma schema for Atlas Academy — Adaptive Forex & Binary Options Learning Platform
+// Mirrors the original Drizzle schema with SQLite-compatible types.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id
+  name             String
+  email            String   @unique
+  passwordHash     String   @map("password_hash")
+  role             String   @default("learner") // 'learner' | 'editor' | 'administrator' | 'owner'
+  persona          String   @default("beginner") // 'beginner' | 'developing' | 'advanced'
+  virtualBalance   Float    @default(10000.0) @map("virtual_balance")
+  experiencePoints Int      @default(0) @map("experience_points")
+  streakDays       Int      @default(1) @map("streak_days")
+  lastActiveAt     DateTime @default(now()) @map("last_active_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  sessions            Session[]
+  progress            Progress[]
+  assessmentAttempts  AssessmentAttempt[]
+  diagnosticAttempts  DiagnosticAttempt[]
+  skillMastery        LearnerSkillMastery[]
+  revisionQueue      RevisionQueue[]
+  simOrders           SimOrder[]
+  binarySims          BinarySim[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Lesson {
+  id             String  @id
+  slug           String  @default("")
+  title          String
+  description    String
+  pathId         String  @default("forex-foundations") @map("path_id")
+  category       String  @default("Forex foundations")
+  level          String  @default("Beginner") // 'Beginner' | 'Developing' | 'Advanced'
+  duration       Int     @default(8)
+  sortOrder      Int     @default(100) @map("sort_order")
+  content        String
+  takeaway       String
+  question       String
+  options        String // JSON-serialised string[]
+  answer         Int
+  explanation    String
+  questionsList  String? // JSON-serialised object[]
+  prerequisiteId String? @map("prerequisite_id")
+  skillIds       String  @default("[]") @map("skill_ids") // JSON-serialised string[]
+  status         String  @default("draft") // 'draft' | 'published' | 'archived'
+  version        Int     @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("lessons")
+}
+
+model Skill {
+  id                    String  @id
+  code                  String  @unique
+  name                  String
+  description           String
+  category              String
+  prerequisiteSkillIds String  @default("[]") @map("prerequisite_skill_ids") // JSON string
+
+  @@map("skills")
+}
+
+model LearnerSkillMastery {
+  id              String   @id
+  userId          String   @map("user_id")
+  skillId         String   @map("skill_id")
+  state           String   @default("not_started") // 'not_started' | 'learning' | 'developing' | 'practising' | 'demonstrated' | 'needs_revision'
+  evidenceScore   Int      @default(0) @map("evidence_score")
+  lastAssessedAt  DateTime @default(now()) @map("last_assessed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId], map: "skill_mastery_user_skill_unique")
+  @@map("learner_skill_mastery")
+}
+
+model Progress {
+  id          String   @id
+  userId      String   @map("user_id")
+  lessonId    String   @map("lesson_id")
+  completed   Boolean  @default(false)
+  score       Int      @default(0)
+  attempts    Int      @default(0)
+  timeSpentSec Int     @default(0) @map("time_spent_sec")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId], map: "progress_user_lesson_unique")
+  @@map("progress")
+}
+
+model AssessmentAttempt {
+  id           String   @id
+  userId       String   @map("user_id")
+  lessonId     String   @map("lesson_id")
+  answer       Int
+  answersList  String?  // JSON-serialised number[]
+  correct      Boolean
+  scorePercent Int      @default(0) @map("score_percent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("assessment_attempts")
+}
+
+model DiagnosticAttempt {
+  id              String   @id
+  userId          String   @map("user_id")
+  score           Int
+  totalQuestions  Int      @map("total_questions")
+  assignedLevel   String   @map("assigned_level") // 'Beginner' | 'Developing' | 'Advanced'
+  categoryScores String?  @map("category_scores") // JSON-serialised Record<string, number>
+  answers         String?  // JSON-serialised number[]
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("diagnostic_attempts")
+}
+
+model RevisionQueue {
+  id              String    @id
+  userId          String    @map("user_id")
+  lessonId        String    @map("lesson_id")
+  skillId         String    @map("skill_id")
+  intervalDays    Int       @default(1) @map("interval_days")
+  easeFactor      Float     @default(2.5) @map("ease_factor")
+  repetitions     Int       @default(0)
+  dueAt           DateTime  @default(now()) @map("due_at")
+  lastReviewedAt  DateTime? @map("last_reviewed_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId], map: "revision_user_lesson_unique")
+  @@map("revision_queue")
+}
+
+model SimOrder {
+  id              String    @id
+  userId          String    @map("user_id")
+  symbol          String
+  type            String    // 'BUY' | 'SELL'
+  orderType       String    @default("MARKET") @map("order_type")
+  lots            Float
+  openPrice       Float     @map("open_price")
+  closePrice      Float?    @map("close_price")
+  sl              Float?
+  tp              Float?
+  status          String    @default("OPEN") // 'OPEN' | 'CLOSED' | 'CANCELLED'
+  pnl             Float     @default(0)
+  pips            Float     @default(0)
+  openTime        DateTime  @default(now()) @map("open_time")
+  closeTime       DateTime? @map("close_time")
+  closeReason     String?  @map("close_reason") // 'MANUAL' | 'TP_HIT' | 'SL_HIT' | 'REPLAY_END'
+  setupNote       String?  @map("setup_note")
+  riskPercentage  Float?    @map("risk_percentage")
+  planFollowed    Boolean?  @default(true) @map("plan_followed")
+  processScore    Int?      @default(100) @map("process_score")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sim_orders")
+}
+
+model BinarySim {
+  id             String   @id
+  userId         String   @map("user_id")
+  asset          String
+  direction      String   // 'CALL' | 'PUT'
+  stake          Float
+  strikePrice    Float    @map("strike_price")
+  expiryPrice    Float    @map("expiry_price")
+  expirySeconds  Int      @map("expiry_seconds")
+  payoutPercent  Float    @map("payout_percent")
+  outcome        String   // 'WIN' | 'LOSS' | 'TIE'
+  returnAmount   Float    @map("return_amount")
+  netPnl         Float    @map("net_pnl")
+  expectedValue  Float    @map("expected_value")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("binary_sims")
+}
+
+model AuditEvent {
+  id        String   @id
+  actorId   String   @map("actor_id")
+  action    String
+  subjectId String   @map("subject_id")
+  details   String?  // JSON-serialised object
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("audit_events")
+}

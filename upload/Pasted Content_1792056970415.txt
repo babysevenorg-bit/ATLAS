@@ -1,0 +1,812 @@
+Complete Product Documentation: Adaptive Forex & Binary Options Learning Platform
+Product blueprint · Version 1.0 · 15 October 2026 · Planning document
+Our goal is to build more than a trading education website. We are planning an adaptive, self-evolving trading academy that teaches users from absolute zero, measures their understanding, guides their practical training, and continuously introduces new educational experiences as they progress.
+The platform should be able to grow with the knowledge you add as its administrator. A beginner might start by learning what a currency pair is. Months later, the same learner could be studying risk management, strategy testing, trading psychology and advanced market analysis, with a dashboard tailored to their demonstrated skills.
+This document defines the product vision, user experience, learning system, simulation engine, backend architecture, database, security, administration, development roadmap and the gaps we need to resolve before building.
+Product at a glance
+
+Learn
+Structured courses, chapters, episodes, quizzes, interactive lessons and revision.
+
+
+
+Adapt
+Assess skill mastery, identify knowledge gaps, assign activities and unlock learning paths.
+
+
+
+Practise
+Forex paper trading, historical market replay, risk-management labs and a separate binary-options educational simulator.
+
+
+
+Evolve
+New content published by the administrator becomes discoverable to the right learners through updated dashboards and learning missions.
+
+
+
+1. Product vision and objectives
+1.1 Vision
+To create an accessible, practical, continuously evolving financial education platform where anyone can learn trading concepts from the beginning and develop their understanding through guided practice rather than relying on theory alone.
+1.2 Mission
+- Make trading education understandable to complete beginners.
+- Connect every important concept to an exercise or simulation.
+- Personalise the learning journey based on demonstrated knowledge.
+- Teach risk awareness, probability and disciplined decision-making.
+- Allow administrators to continually improve and expand the curriculum.
+- Help learners measure their educational progress without misleading them about the likelihood of real-world trading success.
+1.3 Product principles
+1. Education before execution: users learn the relevant concept before attempting complex simulated trades.
+2. Demonstrated mastery over time spent: completing a video does not automatically prove understanding.
+3. Progress without artificial pressure: streaks, achievements and missions should encourage learning without creating gambling-like behaviour.
+4. Simulation before any real-money consideration: the initial product is strictly educational and uses virtual funds.
+5. Content that can evolve: administrators can publish new lessons without redeploying the whole application.
+6. Transparent assessments: learners can understand why they passed, failed or received a recommendation.
+7. Safety and honesty: no guaranteed-profit claims, fabricated performance results or misleading AI trading predictions.
+2. Target users
+The initial audience should include three learner profiles.
+
+
+
+
+
+
+
+
+
+Persona A — Complete beginner
+Knows little or nothing about trading. Needs simple language, definitions, illustrations, short lessons, a structured learning path and frequent feedback.
+
+
+
+
+
+
+
+
+
+
+
+
+Persona B — Developing learner
+Understands basic terminology but struggles to interpret charts, manage risk or apply knowledge consistently. Needs practical scenarios, diagnostics and targeted exercises.
+
+
+
+
+
+Persona C — Advanced learner
+Wants deeper analysis, backtesting, strategy evaluation, psychology and advanced risk concepts. May take diagnostic assessments to skip material already mastered.
+
+
+
+The platform should also have a separate administrator role responsible for content, assessments, publishing, user support and system oversight.
+
+3. Product scope and site map
+The website should be organised into clear areas rather than putting every feature on one overcrowded dashboard.
+Public website
+Home · About · Learning paths · Methodology · FAQs · Legal information
+
+
+Authenticated learner workspace
+
+Dashboard
+Next step, new content, progress and missions.
+
+
+Academy
+Courses, chapters, episodes, quizzes and revision.
+
+
+Trading lab
+Forex practice, replay, simulated orders and analytics.
+
+
+Risk laboratory
+Position sizing, drawdown and risk scenarios.
+
+
+AI learning coach
+Explanations, feedback and study recommendations.
+
+
+Progress & analytics
+Skills, assessment history and practice statistics.
+
+
+
+Profile & settings
+Preferences, accessibility, privacy, notifications and account controls.
+
+
+Separate admin workspace
+Knowledge Studio · Curriculum · Publishing · User management · Audit logs · Platform configuration
+
+
+Public pages
+- Home page with a clear explanation of the platform.
+- How the learning journey works.
+- Forex curriculum overview.
+- Binary-options educational curriculum and risk disclosures.
+- Simulation features and limitations.
+- About, contact, help centre and frequently asked questions.
+- Privacy policy, terms of use and appropriate financial-risk disclosures.
+Learner pages
+The authenticated workspace should have a persistent navigation system and a responsive layout that adapts to laptops, tablets and phones. The main dashboard should prioritise the next useful learning activity, not overwhelm new learners with every advanced feature immediately.
+Admin pages
+Administrators need a separate workspace. Normal users must never receive administrative privileges merely by changing client-side values or guessing a URL.
+4. The adaptive learning system
+This is the central feature that differentiates the platform from a conventional course website.
+4.1 Curriculum hierarchy
+Every learning path follows a structured hierarchy:
+Learning path
+Example: Forex Fundamentals
+
+Course
+Example: Understanding Currency Markets
+
+Chapter
+Example: Currency Pairs
+
+Episode / lesson
+Example: Understanding EUR/USD
+
+Learn
+
+
+Assess
+
+
+Practise
+
+
+
+
+Each episode should have a stable identifier, content version, learning objectives, estimated duration, required skills, prerequisites, activities, assessment rules and publication status.
+An episode may include text, illustrations, video, audio narration, an interactive chart, a quiz or a practical exercise. Administrators can combine these elements as appropriate.
+4.2 How automatic progression works
+The platform should use a deterministic progression engine with configurable rules.
+1. Load the learner's curriculum and current progress.
+2. Identify the skills needed for the next episode.
+3. Check whether prerequisite skills have sufficient evidence of mastery.
+4. Select the next appropriate activity.
+5. Record the learner's answers, practical performance and mistakes.
+6. Update the learner's skill records.
+7. Advance, recommend revision or assign remedial practice.
+8. Update the dashboard and record why the recommendation was made.
+A simplified mastery rule might require at least 80% on a quiz and a pass on a practical exercise. That is an initial example; individual skills may require stricter or different assessments.
+The platform should not treat these percentages as universal measures of competence. The administrator should configure appropriate criteria for each skill.
+Skill mastery states
+State	Meaning
+Not started	The learner has not studied this skill.
+Learning	The learner has begun the relevant lessons.
+Developing	The learner shows partial understanding.
+Practising	The learner is applying the skill in exercises.
+Demonstrated	The learner has met the defined assessment criteria.
+Needs revision	New evidence suggests the learner needs further practice.
+A demonstrated skill should not be erased simply because a learner makes one mistake later. The system should use multiple attempts, evidence quality and spaced revision to decide when a reassessment is appropriate.
+4.3 Diagnostic assessment
+Every new learner receives an orientation and an optional or required diagnostic assessment.
+The diagnostic should evaluate knowledge in areas such as:
+- Basic financial concepts.
+- Currency pairs and exchange rates.
+- Candlestick interpretation.
+- Risk and probability.
+- Order types and trading terminology.
+- Familiarity with simulation tools.
+The diagnostic must distinguish a guess from demonstrated knowledge where practical. A learner who fails the diagnostic receives foundational lessons rather than being locked out of the platform.
+Advanced learners may skip selected introductory content after meeting the relevant assessment criteria.
+4.4 Revision and memory
+The platform should include a spaced-repetition system.
+For example, after learning a concept, the user may receive a brief review the next day, another several days later, and another after a longer interval. The schedule should adapt to performance and the importance of the skill.
+A learner who repeatedly forgets how to calculate a position size should receive a targeted refresher and a new exercise, not merely be sent back to an entire course.
+4.5 The knowledge graph
+Every skill should connect to related skills and learning resources.
+For example:
+- Understanding pips supports position-size calculations.
+- Position sizing supports risk-per-trade calculations.
+- Risk-per-trade calculations support stop-loss planning.
+- Stop-loss planning supports the risk-management practical assessment.
+- Passing the risk-management assessment unlocks selected advanced simulation exercises.
+This dependency graph allows new lessons to integrate into the curriculum without creating a disconnected library of content.
+
+5. The evolving dashboard and engagement system
+The dashboard is not a static collection of cards. It is a personalised view of what the learner should know, practise and discover next.
+5.1 Dashboard sections
+The dashboard should contain:
+1. Continue learning — returns the user to the last unfinished activity.
+2. Your next milestone — shows the nearest meaningful learning objective.
+3. Newly unlocked — displays modules made available by demonstrated skills.
+4. Recommended for you — presents targeted lessons for knowledge gaps.
+5. Practice challenge — offers a relevant exercise in the simulator.
+6. Skill map — displays demonstrated, developing and unstarted skills.
+7. Review queue — lists concepts due for revision.
+8. Learning statistics — shows lessons completed, assessment results and practice consistency.
+9. Announcements — introduces newly published content relevant to the learner.
+10. Achievements — recognises educational milestones and disciplined practice.
+The initial dashboard should display only a manageable selection of these features, with additional capabilities appearing as the learner progresses.
+5.2 Automatic introduction of new content
+When an administrator publishes a new module, the content service should:
+- Validate its publication status and prerequisites.
+- Associate it with relevant skills and learning paths.
+- Identify eligible learners.
+- Determine whether it should be a required chapter, optional lesson, revision activity or advanced module.
+- Add it to eligible learners' recommendations.
+- Record the recommendation and its reason.
+- Avoid repeatedly showing the same announcement.
+- Allow learners to dismiss optional recommendations without losing access to the content.
+A new module should not silently alter a learner's historical completion records. If the curriculum changes materially, the platform should retain version history and explain any new requirements.
+5.3 Healthy gamification
+The platform may include experience points, levels, badges, optional streaks, learning maps and non-financial competitions.
+Rewards should recognise:
+- Completing a course.
+- Explaining a concept correctly.
+- Improving after a mistake.
+- Completing a risk-management exercise.
+- Maintaining a consistent revision routine.
+- Completing a historical simulation and reviewing its limitations.
+Rewards should not depend solely on simulated profit, number of trades or willingness to take risks.
+
+6. Forex learning curriculum
+The initial curriculum should cover the following domains. It is a proposed structure to populate and refine, not a claim that the listed material is exhaustive.
+Stage	Subject	Practical application
+1	Financial-market foundations	Explain trading, markets and risk
+2	Forex terminology	Identify currency pairs, base and quote currencies
+3	Exchange rates, pips and spreads	Calculate price changes and transaction costs
+4	Candlesticks and timeframes	Interpret candles on sample charts
+5	Trends and market structure	Annotate historical charts
+6	Support and resistance	Mark candidate price levels
+7	Indicators and technical analysis	Compare indicators and understand limitations
+8	Fundamental analysis	Interpret selected economic scenarios
+9	Orders and execution	Practise market and pending orders
+10	Risk management	Calculate position size and potential loss
+11	Trading plans and psychology	Document a decision before simulated entry
+12	Strategy testing	Backtest a defined set of rules
+13	Performance evaluation	Analyse drawdown, costs and sample size
+14	Advanced research	Test robustness and understand uncertainty
+6.1 Risk management deserves its own learning path
+This should be a major module rather than a single lesson.
+It should cover:
+- Risk per trade.
+- Position sizing.
+- Stop-loss and take-profit mechanics.
+- Reward-to-risk ratios.
+- Spread, commission and slippage.
+- Leverage and margin.
+- Daily and overall drawdown.
+- Correlated positions.
+- Gaps and execution uncertainty.
+- Losing streaks and emotional decisions.
+- Why a high win rate does not guarantee profitability.
+- Why historical performance does not guarantee future results.
+The practical lab should ask learners to calculate hypothetical risks and explain their decisions before executing simulated trades.
+6.2 Binary-options curriculum
+This should remain a separate educational pathway, not be mixed indistinguishably with forex.
+Suggested topics:
+- Contract mechanics and expiry.
+- Fixed payouts and loss of stake.
+- Break-even win-rate calculations.
+- Expected value and probability.
+- Short-term price uncertainty.
+- Misleading claims and common scams.
+- Jurisdictional restrictions and consumer protections.
+- Differences between educational simulations and actual provider contracts.
+The initial version should not accept deposits, place real trades or connect users to real-money binary-options execution.
+
+7. Trading simulation requirements
+7.1 Historical market replay
+The initial simulator should use licensed historical market data. Users should be able to pause, resume, advance and rewind within supported replay sessions.
+The interface should support:
+- Candlestick charts.
+- Instrument selection.
+- Timeframe selection.
+- Historical replay speed.
+- Drawing tools and selected indicators.
+- Entry and exit markers.
+- Virtual account balance and equity.
+- Open-position details.
+- Simulated order history.
+- Stop-loss and take-profit settings.
+- Trade notes and post-trade review.
+The replay engine must prevent look-ahead bias: learners should not see future prices when making decisions. Historical data must be correctly ordered, and the system must clearly label synthetic, delayed or incomplete data.
+7.2 Forex virtual account
+Each learner receives an isolated virtual account with configurable starting funds.
+The simulator must support a consistent set of accounting rules covering:
+- Available balance.
+- Equity.
+- Unrealised and realised profit or loss.
+- Position size and contract specifications.
+- Spread and commission.
+- Margin and leverage assumptions.
+- Stop-loss and take-profit execution.
+- Swap or financing costs if included in the chosen model.
+- Slippage and gaps where supported.
+- Account limits and reset behaviour.
+Virtual money must be clearly distinguished from real money. Users should not be able to transfer simulated balances into financial accounts or mistake virtual performance for verified real-world results.
+7.3 Example position-sizing calculation
+For a simple illustrative trade with a USD-denominated account:
+- Virtual account balance: $10,000.
+- Hypothetical risk budget: 1%, or $100.
+- Stop distance: 20 pips.
+- Assumed pip value: $10 per pip per standard lot.
+The simplified position size is:
+\[
+\text{Lots}=\frac{\$100}{20\times \$10}=0.5
+\]
+
+This example ignores transaction costs and assumes the stated pip value applies. The actual simulator must derive pip value from the instrument, position size and account currency, and account for fees and execution assumptions.
+7.4 Binary-options scenario simulator
+The binary simulator should use recorded prices and hypothetical contracts. Learners select a scenario, a hypothetical stake and an expiry interval, then evaluate the outcome under explicitly documented rules.
+It should display payout, loss, break-even win rate and expected value. It should not imply that a successful simulated prediction establishes a repeatable trading edge.
+7.5 Post-trade analysis
+Every completed practice trade should be reviewable.
+The system can evaluate whether the learner followed their stated plan, understood their risk, applied the intended order rules and documented the result.
+It must separate process quality from financial outcome. A trade that makes a virtual profit after an undisciplined decision should not automatically be labelled a good trade.
+
+8. AI learning coach
+The AI coach should support the learning engine rather than replace it.
+8.1 Core capabilities
+- Explain trading concepts in beginner-friendly language.
+- Offer alternative explanations when a learner is confused.
+- Generate practice questions from approved educational material.
+- Explain why an answer is incorrect.
+- Summarise the learner's recent practice performance.
+- Recommend lessons based on recorded knowledge gaps.
+- Help learners understand charts and simulated-trade outcomes.
+- Generate draft content for administrator review.
+- Answer questions using the platform's approved knowledge library.
+8.2 How it should work
+The AI coach receives the learner's relevant progress, the current lesson and approved reference material. It returns an explanation, an optional exercise and references to relevant lessons.
+The system should not expose unnecessary personal data to an AI provider. It should also distinguish verified educational facts from generated explanations and disclose when an answer is uncertain.
+AI-generated lessons, quizzes and assessment answers should not be automatically published without suitable review.
+8.3 What the AI coach must not do
+- Promise that a user will become profitable.
+- Present speculative predictions as facts.
+- Encourage a learner to recover losses by increasing risk.
+- Make unlocking decisions solely from conversational impressions.
+- Invent market prices or claim a simulated result came from a live market.
+- Treat a few successful simulated trades as proof of skill.
+Mastery decisions should be made by the assessment and progression services using explicit, testable rules.
+
+9. Technical architecture
+The recommended architecture is a modular web application. We should start with one well-structured backend rather than prematurely splitting everything into microservices.
+Web and PWA frontend
+Next.js · TypeScript · Tailwind CSS · shadcn/ui
+
+Application API
+Authentication · authorization · input validation · rate limits
+
+Learning modules
+Curriculum, mastery, recommendations, revision
+
+
+Simulation modules
+Replay, orders, positions, balances, analytics
+
+
+AI and content modules
+Approved knowledge retrieval, explanations, content drafts
+
+
+Administration
+Publishing, permissions, audits, configuration
+
+
+
+Supabase PostgreSQL
+Persistent data · Row Level Security · migrations · backups
+
+External integrations
+Licensed historical data · optional live feeds · video storage · AI provider
+
+
+9.1 Recommended stack
+Layer	Recommendation	Purpose
+Frontend	Next.js App Router, TypeScript	Pages, routing and responsive interface
+UI	Tailwind CSS, shadcn/ui	Consistent, accessible components
+Charts	TradingView Lightweight Charts or equivalent	Candlesticks and interactive market views
+Backend	Next.js server-side routes and services	Validated business logic and APIs
+Database	Supabase PostgreSQL	Users' progress, content and simulation records
+Authentication	Supabase Auth	Sign-up, sign-in, sessions and recovery
+Permissions	Server-side role checks and RLS	Isolate data and restrict administrative access
+AI	Provider-independent adapter	Switch models without changing core application logic
+Testing	Vitest and Playwright	Unit, integration and browser testing
+Deployment	Web hosting plus managed database	Production hosting when ready
+The first version should run locally during development. We can defer deployment, paid market data and paid AI services until the initial learning and simulation systems work reliably.
+9.2 Backend modules
+Keep the application code separated into logical modules:
+- auth — authentication and session validation.
+- users — profiles, preferences and account status.
+- curriculum — learning paths, courses, chapters and episodes.
+- content — text, media, versions and publication.
+- assessments — questions, attempts, grading and practical tests.
+- mastery — skill records and evidence.
+- progression — prerequisites, next activities and unlocking.
+- recommendations — personalised learning suggestions.
+- revision — spaced-repetition scheduling.
+- market-data — source adapters, candle storage and normalisation.
+- replay — historical replay sessions.
+- simulation — virtual accounts, order execution and accounting.
+- analytics — educational and simulated-trading statistics.
+- ai-coach — approved knowledge retrieval and explanation generation.
+- notifications — in-app announcements and preferences.
+- admin — publishing, moderation and platform settings.
+- audit — security-sensitive and administrative events.
+These should initially be code modules in one application, not separate network services unless scale or operational needs justify that change.
+
+10. Database design
+The database must support continuous curriculum updates, learner-specific progression, simulated trading and secure administration.
+10.1 Core entities
+Entity	Purpose
+profiles	User preferences, role and account status
+learning_paths	Ordered or graph-based learning journeys
+courses	Course metadata and publication status
+chapters	Course sections and ordering
+episodes	Individual lessons and their versions
+episode_activities	Videos, text, charts, questions and tasks
+skills	Definitions of measurable learning outcomes
+skill_prerequisites	Dependencies between skills
+episode_skills	Skills taught or assessed by each episode
+learner_progress	Completion state and resume position
+assessment_attempts	Answers, scores, timestamps and feedback
+learner_skill_mastery	Current mastery state and assessment evidence
+revision_schedule	Skills due for review
+recommendations	Suggested activity, reason and status
+simulation_accounts	Virtual account configuration and balances
+replay_sessions	Historical replay configuration and progress
+orders	Submitted and simulated order requests
+positions	Open and closed simulated positions
+executions	Simulated fills and prices
+price_candles	Timestamped OHLCV market data
+trade_reviews	Learner notes and post-trade reflections
+content_versions	Published curriculum history
+announcements	New content and platform updates
+audit_events	Important administrative and security actions
+The final schema will require additional details and constraints, but these entities provide the starting point.
+10.2 Important relationships
+- One learning path contains many courses or curriculum units.
+- One course contains chapters; chapters contain episodes.
+- One episode can teach multiple skills.
+- One skill can depend on several prerequisite skills.
+- One user has progress records for many episodes and skills.
+- One assessment has many attempts by many learners.
+- One learner has isolated simulation accounts.
+- One simulation account has orders, positions and executions.
+- One replay session references a specific dataset and replay configuration.
+- One content version records the published state of an episode at a particular time.
+Use stable IDs and database constraints. Do not use a lesson title as its identifier, because administrators may rename lessons.
+10.3 Data integrity rules
+- Store timestamps in a consistent timezone, normally UTC.
+- Record the source, timeframe and version of market data.
+- Use appropriate decimal precision for financial calculations.
+- Avoid floating-point arithmetic for authoritative balances and money calculations; use fixed-point or exact decimal arithmetic.
+- Keep an immutable history of executed simulation events.
+- Use database transactions for operations that change balances or positions.
+- Make order submission idempotent so retries cannot accidentally execute the same request twice.
+- Preserve published content versions and assessment history.
+- Prevent users from changing their own roles, assessment results or authoritative balances through client requests.
+10.4 Example: how publishing new content works
+An administrator publishes a risk-management course.
+The database stores its course, chapters, episodes, learning objectives, prerequisites and version. The progression service checks the skill graph for learners who may benefit. It creates recommendations for eligible learners and prerequisite reminders for those who are not yet ready.
+When the learner opens the dashboard, the frontend requests their current recommendations and displays the relevant new module. The system does not need to rewrite individual learner records just because a new course exists.
+This design makes curriculum expansion practical and auditable.
+
+11. API design
+The frontend should interact with explicit, validated application endpoints.
+Endpoint	Responsibility
+GET /api/me	Current authenticated profile
+GET /api/dashboard	Personalised dashboard data
+GET /api/learning/paths	Available learning paths
+GET /api/learning/episodes/:id	Published episode content
+POST /api/learning/progress	Record a permitted progress update
+POST /api/assessments/:id/attempts	Submit an assessment attempt
+GET /api/learning/next	Get the next recommended activity
+GET /api/learning/skills	Retrieve learner skill states
+GET /api/recommendations	Retrieve personalised recommendations
+POST /api/revision/:id/attempts	Record a revision exercise
+POST /api/replay/sessions	Create a historical replay session
+POST /api/simulation/orders	Validate and submit a virtual order
+POST /api/simulation/orders/:id/close	Close a permitted simulated position
+GET /api/simulation/accounts/:id	Retrieve authorised virtual-account state
+GET /api/simulation/trades	Retrieve the learner's trade history
+GET /api/analytics/learning	Educational progress statistics
+GET /api/analytics/simulation	Simulated performance statistics
+POST /api/coach/ask	Request an AI explanation
+/api/admin/*	Restricted administration operations
+These are proposed routes, not an existing implementation.
+API requirements
+- Validate request bodies and parameters using schemas.
+- Authenticate and authorise every protected request.
+- Rate-limit authentication, AI, assessment and simulation endpoints.
+- Use server-derived user IDs rather than trusting a submitted user ID.
+- Verify ownership of every account, order and progress record.
+- Return consistent errors and avoid exposing internal stack traces.
+- Validate all order rules on the server.
+- Add request IDs and appropriate audit events.
+- Keep AI-provider keys and privileged database credentials server-side.
+The exact endpoint methods and payload schemas should be documented in an OpenAPI specification before the backend is considered complete.
+
+12. Administrator Knowledge Studio
+The Knowledge Studio is essential because you want to keep expanding the curriculum after launch.
+12.1 Content authoring workflow
+Administrators should be able to create a learning path and add courses, chapters, episodes and activities through a graphical editor.
+An episode editor should support:
+- Rich text and headings.
+- Images, diagrams, video and audio.
+- Definitions and examples.
+- Multiple-choice and written questions.
+- Interactive chart exercises.
+- Practical simulation tasks.
+- Learning objectives and required skills.
+- Prerequisites and unlock rules.
+- Feedback for correct and incorrect answers.
+- Estimated duration and difficulty.
+- Draft, review, publish, archive and revision states.
+The system should preview how the episode will appear on desktop and mobile.
+12.2 Publishing workflow
+Draft
+Administrator creates or edits content.
+
+Validation and review
+Check required fields, assessment answers, prerequisites and financial claims.
+
+Published version
+Approved content becomes available to eligible learners.
+
+Monitor and improve
+Review learner performance, feedback and outdated material.
+
+
+For the initial release, you may be the only administrator. Nevertheless, the database should distinguish owner, administrator, editor and learner permissions so additional staff can be introduced safely.
+12.3 Content quality controls
+Before publication, validate that:
+- Every required assessment question has an answer and explanation.
+- Required prerequisites exist and do not create circular dependencies.
+- Lesson content renders correctly.
+- Videos and images are accessible.
+- Financial examples state their assumptions.
+- Historical chart exercises do not leak future prices.
+- New versions preserve existing completion history.
+- AI-generated drafts have received the required review.
+The administrator should be able to preview the experience as a beginner, a developing learner and an advanced learner.
+
+13. Security, privacy and financial boundaries
+Security should be built into the architecture from the beginning.
+13.1 Account security
+- Use a maintained authentication system.
+- Require secure session handling and account recovery.
+- Protect administrative accounts with multifactor authentication where supported.
+- Enforce roles and permissions on the server.
+- Rate-limit login and password-reset endpoints.
+- Log sensitive administrative changes.
+- Provide account deletion and appropriate data export functionality.
+13.2 Database security
+Supabase Row Level Security should protect user-owned records. Learners should only read and modify the records their permissions allow.
+Administrative access should use narrowly scoped policies and server-side authorisation. Service-role keys must never be included in frontend bundles.
+Simulation balances and mastery results must not be writable through unrestricted client requests.
+13.3 Financial and regulatory scope
+The first release is an educational platform, not a broker, investment adviser or real-money execution system.
+Before introducing real-money trading, broker integrations, referrals to trading providers or paid binary-options functionality, obtain jurisdiction-specific legal advice. Binary-options products are prohibited or restricted in some jurisdictions, and their regulatory treatment depends on the product, provider and location.
+We should also review privacy requirements, consumer-protection obligations, advertising claims, age policies, intellectual-property licences and the terms governing market-data use. If serving users in Kenya or other jurisdictions, these matters need to be assessed for the intended operating model.
+A disclaimer alone does not make a regulated activity lawful.
+
+14. What is currently missing from the idea?
+The concept is strong, but there are important gaps to close before implementation.
+
+Gap 1 — The actual curriculum is not written yet
+High priority
+We have proposed subjects and learning stages, but not a complete syllabus with learning objectives, finished lessons, assessment questions, explanations and practical tasks.
+What to add: a curriculum specification and content production plan for every learning path.
+
+
+
+
+Gap 2 — Mastery rules are not fully defined
+High priority
+We need explicit rules for passing assessments, revising forgotten skills, skipping lessons and handling inconsistent performance.
+What to add: a versioned mastery policy and test cases for the progression engine.
+
+
+
+
+Gap 3 — Market data is not selected
+High priority
+Historical replay depends on data quality, coverage, timestamps, instrument specifications and redistribution rights.
+What to add: compare data providers and select an initial licensed dataset before building the full simulator.
+
+
+
+
+Gap 4 — Simulation rules need formal specifications
+High priority
+Spreads, execution timing, margin, slippage, position sizing and stop-loss handling must be defined. Otherwise, different parts of the application may calculate different results.
+What to add: a simulation specification with deterministic examples and automated tests.
+
+
+
+
+Gap 5 — Regulatory and data licensing review
+High priority
+The intended markets, binary-options scope, data licences, AI disclosures and privacy obligations have not been finalised.
+What to add: a written compliance checklist before any public launch or real-money integrations.
+
+
+
+
+Gap 6 — Business model and operating budget
+Planning needed
+Pricing, paid features, hosting costs, market-data fees, AI usage and content production expenses remain undecided.
+What to add: an initial cost model and a free-first launch plan.
+
+
+
+
+Gap 7 — Accessibility and mobile experience
+Planning needed
+We have not specified keyboard navigation, screen-reader support, low-bandwidth modes, captioning or chart alternatives for users who cannot easily interpret visual charts.
+What to add: accessibility and responsive-design acceptance criteria.
+
+
+
+
+Gap 8 — Monitoring and recovery
+Planning needed
+Backups, error monitoring, service availability, database migrations and recovery procedures are not yet specified.
+What to add: an operational runbook and tested backup-and-restore procedure before production.
+
+
+
+14.1 Additional gaps worth addressing
+- Assessment quality: question banks should avoid simply repeating memorised questions.
+- AI evaluation: test for hallucinations, incorrect explanations and unsupported financial claims.
+- Curriculum versioning: decide how existing learners are handled when required lessons change.
+- Content rights: confirm permissions for videos, chart data, images and third-party educational material.
+- User retention: measure whether users return because they learn, not because they feel pressured.
+- Analytics validity: distinguish completion, knowledge retention, disciplined practice and simulated financial outcomes.
+- Incident response: define what happens when a data feed, simulation calculation or authentication service malfunctions.
+- Testing: establish automated tests for order accounting, access controls, curriculum unlocking and data isolation.
+
+15. Development roadmap
+The biggest risk is trying to build the entire vision at once. We should build the learning engine and prove that progression works before investing heavily in advanced simulation, AI and live market data.
+01
+
+Foundation and product specification
+First milestone
+Finalise the curriculum structure, user journeys, design system, database schema, permissions and initial assessment rules. Create the project and establish automated testing.
+
+
+
+02
+
+Working learning platform
+Implement authentication, courses, chapters, episodes, quizzes, learner progress, mastery records and the first administrator Knowledge Studio.
+
+
+
+03
+
+Adaptive progression and evolving dashboard
+Implement diagnostics, prerequisites, targeted revision, recommendation rules, newly unlocked content and dashboard updates after publishing new modules.
+
+
+
+04
+
+Forex simulation MVP
+Integrate a licensed historical dataset, chart replay, virtual balances, simulated orders, risk calculations, trade history and post-trade reviews.
+
+
+
+05
+
+Binary-options education and AI coach
+Add probability exercises, hypothetical contract simulations, approved knowledge retrieval and personalised explanations.
+
+
+
+06
+
+Beta, validation and launch
+Test security, accounting accuracy, content quality, accessibility, performance, backups and learner outcomes. Release only after the critical acceptance criteria pass.
+
+
+
+These are implementation phases, not fixed delivery estimates. Timelines depend on the amount of content, available market data, integrations and testing effort.
+15.1 What the first usable version must include
+The first version should include:
+- User registration and authentication.
+- A complete beginner learning path with real educational content.
+- Courses, chapters, episodes and quizzes.
+- Recorded progress and skill mastery.
+- Automatic unlocking and revision recommendations.
+- A dashboard that updates when the learner progresses.
+- An admin editor that can publish new educational content.
+- A responsive, accessible interface.
+- Secure database policies and automated tests.
+We should avoid delaying the first usable version to build live market feeds, complex AI agents, leaderboards, payment systems or real-money trading integrations.
+15.2 Minimum acceptance criteria
+The first version is not complete just because the pages look good.
+Test	Required result
+New registration	User receives a valid learner profile and beginner orientation.
+Lesson completion	Progress persists after refresh and re-login.
+Failed assessment	The system explains mistakes and offers relevant practice.
+Passed assessment	The next activity unlocks only when its prerequisites are satisfied.
+New admin content	A newly published module appears for eligible learners without a code deployment.
+Ineligible learner	Prerequisite recommendations appear instead of inappropriate unlocking.
+Content revision	Previously recorded progress and historical versions remain intact.
+Data isolation	One learner cannot access another learner's private records.
+Simulation accounting	Calculations match independently tested examples and documented assumptions.
+Historical replay	Future candles are not exposed before the learner makes a decision.
+Recovery	A tested backup can be restored without corrupting learner progress.
+
+16. How we measure success
+The platform needs metrics that reflect learning quality, not simply time on site.
+Metric	What it tells us
+Lesson completion	Whether learners finish assigned content
+Assessment improvement	Whether learners understand more after instruction
+Delayed retention	Whether knowledge remains after time has passed
+Practical mastery	Whether learners can apply concepts to new scenarios
+Revision success	Whether targeted practice fixes knowledge gaps
+Learning-path progression	Whether learners advance through required skills
+Simulator rule compliance	Whether learners understand and follow defined risk rules
+Content effectiveness	Which lessons need revision or additional examples
+Accessibility and reliability	Whether the platform works for different users and conditions
+Healthy retention	Whether learners return because the platform remains useful
+We should not use simulated profit as the principal measure of educational success. A learner's understanding of probability and risk may improve even when their simulated trades lose money.
+
+17. Product decisions that still need confirmation
+We have a strong product direction, but some choices are proposals rather than final decisions.
+1. Target audience
+
+Beginners only at first
+
+Beginners and experienced learners
+
+
+2. Market data for the first simulator
+
+Historical replay only
+
+Live prices with virtual funds
+
+Both historical replay and live prices
+
+
+3. Learning progression
+
+Strict sequence: complete every required chapter
+
+Adaptive sequence: diagnostics, mastery and personalised lessons
+
+Hybrid: beginner orientation followed by adaptive progression
+
+
+4. Business model
+
+Free educational platform
+
+Free core education with optional premium tools
+
+Subscription-based platform
+
+
+5. What should be included in the first development milestone?
+[x] Risk-management learning lab
+[ ] Admin Knowledge Studio
+[ ] Forex simulator
+[x] AI learning coach
+[ ] Binary-options educational pathway
+
+6. Platform name
+
+Finalise product requirements 
+18. My final recommendation
+There are three things I would prioritise above everything else.
+First: build the learning engine before building a massive course library. A smaller collection of well-designed lessons that automatically adapts to a learner is more valuable than hundreds of disconnected articles.
+Second: make the Knowledge Studio powerful enough to grow the platform. Adding a new lesson should be a content-management task, not a software-development task. You should be able to create a course, attach its learning objectives, define prerequisites, publish it, and have the progression engine distribute it appropriately.
+Third: make the simulator trustworthy. Its calculations, market-data assumptions, execution rules and historical replay behaviour must be tested. The simulator is where learners turn their knowledge into practice, so incorrect results would undermine the entire product.
+The defining feature should be this:
+Every lesson builds a skill. Every assessment provides evidence. Every skill influences what comes next. Every new piece of knowledge can create a new learning experience.
+
+That is the foundation of a genuinely progressive trading academy.
+The documentation above is our product blueprint, not proof that the application has already been built. Before coding, the next deliverable should be a definitive product requirements document, followed by the database schema, API specification, curriculum rules and a prioritised development backlog. We should then implement and test the platform one phase at a time

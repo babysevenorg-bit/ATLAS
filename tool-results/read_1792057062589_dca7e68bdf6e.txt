@@ -1,0 +1,1540 @@
+     1→"use client";
+     2→
+     3→import React, { useEffect, useMemo, useState } from "react";
+     4→import Link from "next/link";
+     5→import { useRouter } from "next/navigation";
+     6→import {
+     7→  ArrowRight,
+     8→  ArrowUpRight,
+     9→  BookOpen,
+    10→  Check,
+    11→  CheckCircle2,
+    12→  ChevronDown,
+    13→  ChevronLeft,
+    14→  ChevronRight,
+    15→  CircleHelp,
+    16→  Clock3,
+    17→  Compass,
+    18→  GraduationCap,
+    19→  LayoutDashboard,
+    20→  LockKeyhole,
+    21→  LogOut,
+    22→  Menu,
+    23→  Plus,
+    24→  Search,
+    25→  Settings2,
+    26→  ShieldCheck,
+    27→  ShieldAlert,
+    28→  Sparkles,
+    29→  Target,
+    30→  TrendingUp,
+    31→  TrendingDown,
+    32→  X,
+    33→  Zap,
+    34→  ChartNoAxesCombined,
+    35→  ClipboardList,
+    36→  Play,
+    37→  RotateCcw,
+    38→  Lightbulb,
+    39→  Send,
+    40→  FileText,
+    41→  CheckCircle,
+    42→  Circle,
+    43→  Calculator,
+    44→  AlertCircle,
+    45→  BrainCircuit,
+    46→  SplitSquareVertical,
+    47→  Layers,
+    48→  Award,
+    49→  BarChart3,
+    50→  Flame,
+    51→  UserCheck,
+    52→  DollarSign,
+    53→  Star,
+    54→  Film,
+    55→  ListPlus,
+    56→  Cpu
+    57→} from "lucide-react";
+    58→
+    59→import type { Lesson, LearningPathMeta, Skill, Masterclass } from "@/lib/curriculum";
+    60→import { LEARNING_PATHS, SKILLS_TAXONOMY, MASTERCLASSES_CATALOG, isUnlocked } from "@/lib/curriculum";
+    61→import TradingLab from "@/components/TradingLab";
+    62→import BinaryOptionsLab from "@/components/BinaryOptionsLab";
+    63→import RiskLaboratory from "@/components/RiskLaboratory";
+    64→import RevisionDeck from "@/components/RevisionDeck";
+    65→import DiagnosticModal from "@/components/DiagnosticModal";
+    66→import PublicPortal from "@/components/PublicPortal";
+    67→import LiveMarketTicker from "@/components/LiveMarketTicker";
+    68→import NetflixCard from "@/components/NetflixCard";
+    69→import ClassDetailModal from "@/components/ClassDetailModal";
+    70→import InteractiveLessonPlayer from "@/components/InteractiveLessonPlayer";
+    71→
+    72→type User = {
+    73→  id: string;
+    74→  name: string;
+    75→  email: string;
+    76→  role: string;
+    77→  persona?: string;
+    78→  virtualBalance?: number;
+    79→  experiencePoints?: number;
+    80→} | null;
+    81→
+    82→type Props = {
+    83→  initialSection: string;
+    84→  lessons: Lesson[];
+    85→  initialCompleted: string[];
+    86→  user: User;
+    87→};
+    88→
+    89→const navItems = [
+    90→  { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+    91→  { id: "academy", label: "Academy & Classes", icon: BookOpen },
+    92→  { id: "trading-lab", label: "Trading Lab", icon: ChartNoAxesCombined, badge: "REPLAY" },
+    93→  { id: "risk-lab", label: "Risk Laboratory", icon: Calculator },
+    94→  { id: "binary-lab", label: "Binary Options Lab", icon: SplitSquareVertical },
+    95→  { id: "revision", label: "Daily Revision", icon: BrainCircuit, badge: "DUE" },
+    96→  { id: "coach", label: "AI Learning Coach", icon: Sparkles },
+    97→  { id: "progress", label: "Skills & Analytics", icon: TrendingUp },
+    98→];
+    99→
+   100→export default function Workspace({ initialSection, lessons, initialCompleted, user }: Props) {
+   101→  const router = useRouter();
+   102→  const [section, setSection] = useState(initialSection);
+   103→  const [completed, setCompleted] = useState<string[]>(initialCompleted);
+   104→  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+   105→  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("All");
+   106→
+   107→  // Netflix Preview Modal State
+   108→  const [selectedMasterclass, setSelectedMasterclass] = useState<Masterclass | null>(null);
+   109→  const [savedClassIds, setSavedClassIds] = useState<string[]>(["class-forex-mastery", "class-risk-defense"]);
+   110→
+   111→  // Modals & Navigation State
+   112→  const [diagnosticOpen, setDiagnosticOpen] = useState(false);
+   113→  const [authOpen, setAuthOpen] = useState(false);
+   114→  const [authMode, setAuthMode] = useState<"login" | "register">("register");
+   115→  const [authError, setAuthError] = useState("");
+   116→  const [authBusy, setAuthBusy] = useState(false);
+   117→  const [mobileOpen, setMobileOpen] = useState(false);
+   118→  const [search, setSearch] = useState("");
+   119→  const [toastNotice, setToastNotice] = useState("");
+   120→  const [isPublicLanding, setIsPublicLanding] = useState(false);
+   121→
+   122→  // Persona State
+   123→  const [activePersona, setActivePersona] = useState<string>(user?.persona || "beginner");
+   124→  const [virtualBalance, setVirtualBalance] = useState<number>(user?.virtualBalance || 10000);
+   125→  const [experiencePoints, setExperiencePoints] = useState<number>(user?.experiencePoints || 0);
+   126→
+   127→  // AI Coach Chat State
+   128→  const [coachInput, setCoachInput] = useState("");
+   129→  const [coachBusy, setCoachBusy] = useState(false);
+   130→  const [coachHistory, setCoachHistory] = useState<{ question: string; answer: string; related?: { id: string; title: string }[] }[]>([
+   131→    {
+   132→      question: "How should I structure my learning journey?",
+   133→      answer: "Welcome to Atlas Academy! Start with our **#1 Masterclass: Forex Foundations** to master currency pair quotes and pip calculations. Next, dive into the **Capital Defense & Position Sizing Lab** before testing your setups in the **Trading Replay Lab**.",
+   134→      related: [
+   135→        { id: "what-is-forex", title: "What is the Forex Market?" },
+   136→        { id: "risk-per-trade", title: "The 1% Rule" }
+   137→      ]
+   138→    }
+   139→  ]);
+   140→
+   141→  // Admin Knowledge Studio State
+   142→  const [draftsList, setDraftsList] = useState<any[]>([]);
+   143→  const [studioModalOpen, setStudioModalOpen] = useState(false);
+   144→  const [studioBusy, setStudioBusy] = useState(false);
+   145→  const [studioError, setStudioError] = useState("");
+   146→
+   147→  // Sync section from URL or prop
+   148→  useEffect(() => {
+   149→    setSection(initialSection);
+   150→    setActiveLessonId(null);
+   151→  }, [initialSection]);
+   152→
+   153→  // Restore guest storage if unauthenticated
+   154→  useEffect(() => {
+   155→    if (!user) {
+   156→      try {
+   157→        const saved = JSON.parse(localStorage.getItem("atlas_demo_completed") || "[]");
+   158→        if (Array.isArray(saved) && saved.length > 0) setCompleted(saved);
+   159→        const savedPersona = localStorage.getItem("atlas_demo_persona");
+   160→        if (savedPersona) setActivePersona(savedPersona);
+   161→        const savedClasses = JSON.parse(localStorage.getItem("atlas_saved_classes") || "[]");
+   162→        if (Array.isArray(savedClasses) && savedClasses.length > 0) setSavedClassIds(savedClasses);
+   163→      } catch {}
+   164→    }
+   165→  }, [user]);
+   166→
+   167→  // Load Admin Drafts when viewing Studio
+   168→  useEffect(() => {
+   169→    if (section === "studio" && user && user.role !== "learner") {
+   170→      fetch("/api/admin/lessons")
+   171→        .then(r => r.json())
+   172→        .then(data => {
+   173→          if (Array.isArray(data)) setDraftsList(data);
+   174→        })
+   175→        .catch(() => {});
+   176→    }
+   177→  }, [section, user]);
+   178→
+   179→  const completedCount = lessons.filter(l => completed.includes(l.id)).length;
+   180→  const progressPercent = Math.round((completedCount / Math.max(lessons.length, 1)) * 100);
+   181→  const currentLesson = lessons.find(l => l.id === activeLessonId);
+   182→
+   183→  // Featured Top Masterclass for Hero Banner
+   184→  const featuredClass = MASTERCLASSES_CATALOG[0];
+   185→
+   186→  // Next Recommended Lesson Engine
+   187→  const nextLesson = useMemo(() => {
+   188→    return lessons.find(l => !completed.includes(l.id) && isUnlocked(l, completed)) || lessons[0];
+   189→  }, [lessons, completed]);
+   190→
+   191→  // Skills demonstrated count
+   192→  const demonstratedSkillsCount = useMemo(() => {
+   193→    const activeSkills = new Set<string>();
+   194→    lessons.filter(l => completed.includes(l.id)).forEach(l => {
+   195→      l.skillIds.forEach(s => activeSkills.add(s));
+   196→    });
+   197→    return activeSkills.size;
+   198→  }, [lessons, completed]);
+   199→
+   200→  const isAdmin = user && ["owner", "administrator", "editor"].includes(user.role);
+   201→
+   202→  function navigateTo(targetSection: string) {
+   203→    setSection(targetSection);
+   204→    setActiveLessonId(null);
+   205→    setMobileOpen(false);
+   206→    setSearch("");
+   207→    setIsPublicLanding(false);
+   208→    if (targetSection === "dashboard") router.push("/");
+   209→    else router.push(`/workspace/${targetSection}`);
+   210→  }
+   211→
+   212→  function openLesson(lessonId: string) {
+   213→    setActiveLessonId(lessonId);
+   214→    setSelectedMasterclass(null);
+   215→    setSection("academy");
+   216→    setMobileOpen(false);
+   217→    window.scrollTo({ top: 0, behavior: "smooth" });
+   218→  }
+   219→
+   220→  function toggleSaveClass(classId: string) {
+   221→    setSavedClassIds(prev => {
+   222→      const next = prev.includes(classId) ? prev.filter(id => id !== classId) : [...prev, classId];
+   223→      try {
+   224→        localStorage.setItem("atlas_saved_classes", JSON.stringify(next));
+   225→      } catch {}
+   226→      return next;
+   227→    });
+   228→  }
+   229→
+   230→  // Handle Assessment Completion from Player
+   231→  async function handleLessonAssessment(lessonId: string, answerIdx: number): Promise<boolean> {
+   232→    const lesson = lessons.find(l => l.id === lessonId);
+   233→    if (!lesson) return false;
+   234→
+   235→    if (user) {
+   236→      try {
+   237→        const res = await fetch("/api/assessments", {
+   238→          method: "POST",
+   239→          headers: { "Content-Type": "application/json" },
+   240→          body: JSON.stringify({ lessonId, answer: answerIdx }),
+   241→        });
+   242→        const data = await res.json();
+   243→        if (res.ok && data.correct) {
+   244→          setCompleted(prev => [...new Set([...prev, lessonId])]);
+   245→          if (data.xpGained) setExperiencePoints(xp => xp + data.xpGained);
+   246→          return true;
+   247→        }
+   248→        return false;
+   249→      } catch {
+   250→        return false;
+   251→      }
+   252→    } else {
+   253→      // Guest local execution
+   254→      const isCorrect = answerIdx === lesson.answer;
+   255→      if (isCorrect) {
+   256→        const updated = [...new Set([...completed, lessonId])];
+   257→        setCompleted(updated);
+   258→        setExperiencePoints(xp => xp + 50);
+   259→        try {
+   260→          localStorage.setItem("atlas_demo_completed", JSON.stringify(updated));
+   261→        } catch {}
+   262→      }
+   263→      return isCorrect;
+   264→    }
+   265→  }
+   266→
+   267→  // Ask AI Learning Coach
+   268→  async function handleAskCoach(e?: React.FormEvent) {
+   269→    if (e) e.preventDefault();
+   270→    const query = coachInput.trim();
+   271→    if (!query || coachBusy) return;
+   272→
+   273→    setCoachBusy(true);
+   274→    setCoachInput("");
+   275→
+   276→    try {
+   277→      const res = await fetch("/api/coach/ask", {
+   278→        method: "POST",
+   279→        headers: { "Content-Type": "application/json" },
+   280→        body: JSON.stringify({ question: query }),
+   281→      });
+   282→      const data = await res.json();
+   283→      if (res.ok) {
+   284→        setCoachHistory(prev => [
+   285→          ...prev,
+   286→          { question: query, answer: data.answer, related: data.relatedLessons }
+   287→        ]);
+   288→      } else {
+   289→        setCoachHistory(prev => [
+   290→          ...prev,
+   291→          { question: query, answer: data.error || "I could not retrieve an explanation right now." }
+   292→        ]);
+   293→      }
+   294→    } catch {
+   295→      setCoachHistory(prev => [
+   296→        ...prev,
+   297→        { question: query, answer: "Connection error. Please try again." }
+   298→      ]);
+   299→    }
+   300→    setCoachBusy(false);
+   301→  }
+   302→
+   303→  // Handle Authentication
+   304→  async function handleAuthSubmit(e: React.FormEvent<HTMLFormElement>) {
+   305→    e.preventDefault();
+   306→    setAuthBusy(true);
+   307→    setAuthError("");
+   308→    const form = new FormData(e.currentTarget);
+   309→
+   310→    try {
+   311→      const res = await fetch("/api/auth", {
+   312→        method: "POST",
+   313→        headers: { "Content-Type": "application/json" },
+   314→        body: JSON.stringify({
+   315→          action: authMode,
+   316→          name: form.get("name"),
+   317→          email: form.get("email"),
+   318→          password: form.get("password"),
+   319→        }),
+   320→      });
+   321→      const data = await res.json();
+   322→      if (!res.ok) {
+   323→        setAuthError(data.error || "Authentication failed.");
+   324→      } else {
+   325→        setAuthOpen(false);
+   326→        window.location.href = "/";
+   327→      }
+   328→    } catch {
+   329→      setAuthError("Server unavailable. Please try again.");
+   330→    }
+   331→    setAuthBusy(false);
+   332→  }
+   333→
+   334→  // Handle Logout
+   335→  async function handleLogout() {
+   336→    await fetch("/api/auth", {
+   337→      method: "POST",
+   338→      headers: { "Content-Type": "application/json" },
+   339→      body: JSON.stringify({ action: "logout" }),
+   340→    });
+   341→    window.location.href = "/";
+   342→  }
+   343→
+   344→  // Fast Persona Switching
+   345→  function switchPersona(persona: "beginner" | "developing" | "advanced" | "admin") {
+   346→    if (persona === "beginner") {
+   347→      setActivePersona("beginner");
+   348→      setCompleted([]);
+   349→      localStorage.setItem("atlas_demo_completed", JSON.stringify([]));
+   350→      localStorage.setItem("atlas_demo_persona", "beginner");
+   351→      navigateTo("dashboard");
+   352→    } else if (persona === "developing") {
+   353→      setActivePersona("developing");
+   354→      const devUnlocked = ["what-is-forex", "currency-pairs", "pips-spreads", "lot-sizes-leverage", "order-types"];
+   355→      setCompleted(devUnlocked);
+   356→      localStorage.setItem("atlas_demo_completed", JSON.stringify(devUnlocked));
+   357→      localStorage.setItem("atlas_demo_persona", "developing");
+   358→      navigateTo("dashboard");
+   359→    } else if (persona === "advanced") {
+   360→      setActivePersona("advanced");
+   361→      const advUnlocked = lessons.map(l => l.id);
+   362→      setCompleted(advUnlocked);
+   363→      localStorage.setItem("atlas_demo_completed", JSON.stringify(advUnlocked));
+   364→      localStorage.setItem("atlas_demo_persona", "advanced");
+   365→      navigateTo("trading-lab");
+   366→    } else if (persona === "admin") {
+   367→      navigateTo("studio");
+   368→    }
+   369→    setToastNotice(`Calibrated Persona: ${persona.toUpperCase()}`);
+   370→    setTimeout(() => setToastNotice(""), 3500);
+   371→  }
+   372→
+   373→  // Reset Virtual Balance
+   374→  async function resetVirtualBalance() {
+   375→    try {
+   376→      await fetch("/api/simulation/reset", { method: "POST" });
+   377→      setVirtualBalance(10000);
+   378→      setToastNotice("Virtual balance reset to $10,000.00!");
+   379→      setTimeout(() => setToastNotice(""), 3500);
+   380→    } catch {}
+   381→  }
+   382→
+   383→  // Save Admin Draft Lesson
+   384→  async function handleSaveDraft(e: React.FormEvent<HTMLFormElement>) {
+   385→    e.preventDefault();
+   386→    setStudioBusy(true);
+   387→    setStudioError("");
+   388→    const form = new FormData(e.currentTarget);
+   389→
+   390→    const payload = {
+   391→      title: form.get("title"),
+   392→      description: form.get("description"),
+   393→      pathId: form.get("pathId"),
+   394→      category: form.get("category"),
+   395→      level: form.get("level"),
+   396→      duration: form.get("duration"),
+   397→      prerequisiteId: form.get("prerequisiteId") || null,
+   398→      content: form.get("content"),
+   399→      takeaway: form.get("takeaway"),
+   400→      question: form.get("question"),
+   401→      options: [0, 1, 2, 3].map(i => form.get(`option${i}`)),
+   402→      answer: Number(form.get("answer")),
+   403→      explanation: form.get("explanation"),
+   404→    };
+   405→
+   406→    try {
+   407→      const res = await fetch("/api/admin/lessons", {
+   408→        method: "POST",
+   409→        headers: { "Content-Type": "application/json" },
+   410→        body: JSON.stringify(payload),
+   411→      });
+   412→      const data = await res.json();
+   413→      if (!res.ok) {
+   414→        setStudioError(data.error);
+   415→      } else {
+   416→        setStudioModalOpen(false);
+   417→        setToastNotice("New lesson draft created! Ready to publish.");
+   418→        const updated = await fetch("/api/admin/lessons").then(r => r.json());
+   419→        setDraftsList(updated);
+   420→      }
+   421→    } catch {
+   422→      setStudioError("Unable to save draft.");
+   423→    }
+   424→    setStudioBusy(false);
+   425→  }
+   426→
+   427→  // Publish Draft
+   428→  async function publishLesson(id: string) {
+   429→    const res = await fetch("/api/admin/lessons", {
+   430→      method: "PATCH",
+   431→      headers: { "Content-Type": "application/json" },
+   432→      body: JSON.stringify({ id, status: "published" }),
+   433→    });
+   434→    if (res.ok) {
+   435→      window.location.reload();
+   436→    } else {
+   437→      setToastNotice("Could not publish lesson.");
+   438→    }
+   439→  }
+   440→
+   441→  // Filtered Masterclasses for Category Filter Bar
+   442→  const filteredMasterclasses = useMemo(() => {
+   443→    if (selectedCategoryFilter === "All") return MASTERCLASSES_CATALOG;
+   444→    if (selectedCategoryFilter === "Top 10") return MASTERCLASSES_CATALOG.filter(c => c.top10Rank);
+   445→    if (selectedCategoryFilter === "My List") return MASTERCLASSES_CATALOG.filter(c => savedClassIds.includes(c.id));
+   446→    return MASTERCLASSES_CATALOG.filter(c => c.category.toLowerCase().includes(selectedCategoryFilter.toLowerCase()));
+   447→  }, [selectedCategoryFilter, savedClassIds]);
+   448→
+   449→  // Render Public Landing View if requested
+   450→  if (isPublicLanding) {
+   451→    return (
+   452→      <PublicPortal
+   453→        onEnterWorkspace={(p) => {
+   454→          setIsPublicLanding(false);
+   455→          if (p) switchPersona(p);
+   456→        }}
+   457→        onOpenAuth={(mode) => {
+   458→          setAuthMode(mode);
+   459→          setAuthOpen(true);
+   460→        }}
+   461→      />
+   462→    );
+   463→  }
+   464→
+   465→  return (
+   466→    <div className="app-shell">
+   467→      {/* SIDEBAR NAVIGATION */}
+   468→      <aside className={`sidebar ${mobileOpen ? "sidebar-open" : ""}`}>
+   469→        <div className="brand" onClick={() => navigateTo("dashboard")} role="button" tabIndex={0}>
+   470→          <div className="brand-mark">
+   471→            <span>◆</span>
+   472→          </div>
+   473→          <div>
+   474→            <div className="brand-name">atlas<span>.</span></div>
+   475→            <div className="brand-caption">ADAPTIVE ACADEMY</div>
+   476→          </div>
+   477→        </div>
+   478→
+   479→        <div className="sidebar-scroll">
+   480→          <div className="nav-group-label">WORKSPACE MODULES</div>
+   481→          <nav className="nav-list" aria-label="Main Navigation">
+   482→            {navItems.map(item => (
+   483→              <Link
+   484→                key={item.id}
+   485→                href={item.id === "dashboard" ? "/" : `/workspace/${item.id}`}
+   486→                onClick={e => {
+   487→                  e.preventDefault();
+   488→                  navigateTo(item.id);
+   489→                }}
+   490→                className={`nav-link ${section === item.id ? "active" : ""}`}
+   491→              >
+   492→                <item.icon size={18} strokeWidth={1.8} />
+   493→                <span>{item.label}</span>
+   494→                {item.badge && <span className="nav-new">{item.badge}</span>}
+   495→              </Link>
+   496→            ))}
+   497→          </nav>
+   498→
+   499→          <div className="nav-group-label second">LEARNING JOURNEY</div>
+   500→          <div className="sidebar-path">
+   501→            <div className="path-icon">
+   502→              <GraduationCap size={19} />
+   503→            </div>
+   504→            <div>
+   505→              <strong>Forex & Risk Mastery</strong>
+   506→              <span>{completedCount} of {lessons.length} Lessons</span>
+   507→            </div>
+   508→            <ChevronRight size={16} />
+   509→          </div>
+   510→
+   511→          <div className="sidebar-progress">
+   512→            <div style={{ width: `${progressPercent}%` }} />
+   513→          </div>
+   514→
+   515→          <div className="sidebar-persona-badge">
+   516→            <UserCheck size={14} />
+   517→            <span>Persona: {activePersona.toUpperCase()}</span>
+   518→          </div>
+   519→
+   520→          {isAdmin && (
+   521→            <>
+   522→              <div className="nav-group-label second">ADMINISTRATION</div>
+   523→              <Link
+   524→                href="/workspace/studio"
+   525→                onClick={e => {
+   526→                  e.preventDefault();
+   527→                  navigateTo("studio");
+   528→                }}
+   529→                className={`nav-link ${section === "studio" ? "active" : ""}`}
+   530→              >
+   531→                <Settings2 size={18} />
+   532→                <span>Knowledge Studio</span>
+   533→              </Link>
+   534→            </>
+   535→          )}
+   536→        </div>
+   537→
+   538→        {/* Sidebar Footer */}
+   539→        <div className="sidebar-bottom">
+   540→          <div className="sidebar-help">
+   541→            <div className="help-top">
+   542→              <CircleHelp size={18} />
+   543→              <span>Strictly Educational</span>
+   544→            </div>
+   545→            <p>Simulated virtual funds only. Zero real-money execution.</p>
+   546→            <button onClick={() => setDiagnosticOpen(true)}>
+   547→              Diagnostic Test <ArrowUpRight size={14} />
+   548→            </button>
+   549→          </div>
+   550→
+   551→          <div className="sidebar-foot">
+   552→            <span className="online-dot" />
+   553→            <span>Atlas Platform v1.0</span>
+   554→            <button onClick={() => setIsPublicLanding(true)} className="foot-portal-btn">
+   555→              Public Portal
+   556→            </button>
+   557→          </div>
+   558→        </div>
+   559→      </aside>
+   560→
+   561→      {mobileOpen && <div className="mobile-backdrop" onClick={() => setMobileOpen(false)} />}
+   562→
+   563→      {/* MAIN CONTENT AREA */}
+   564→      <div className="main-area">
+   565→        {/* Top Header Bar */}
+   566→        <header className="topbar">
+   567→          <div className="topbar-left">
+   568→            <button className="mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+   569→              <Menu size={22} />
+   570→            </button>
+   571→            <span className="breadcrumb">Atlas Academy</span>
+   572→            <ChevronRight size={14} className="breadcrumb-arrow" />
+   573→            <strong>
+   574→              {section === "trading-lab" && "Trading Replay Lab"}
+   575→              {section === "risk-lab" && "Risk Management Laboratory"}
+   576→              {section === "binary-lab" && "Binary Options Educational Lab"}
+   577→              {section === "revision" && "Daily Revision Queue"}
+   578→              {section === "coach" && "AI Learning Coach"}
+   579→              {section === "studio" && "Knowledge Studio"}
+   580→              {section === "progress" && "Skills & Performance Analytics"}
+   581→              {section === "academy" && (activeLessonId ? "Interactive Masterclass Episode" : "Masterclass Catalog")}
+   582→              {section === "dashboard" && "Adaptive Overview & Classes"}
+   583→              {section === "profile" && "Account & Settings"}
+   584→            </strong>
+   585→          </div>
+   586→
+   587→          <div className="topbar-right">
+   588→            {/* Quick Diagnostic Assessment Trigger */}
+   589→            <button
+   590→              onClick={() => setDiagnosticOpen(true)}
+   591→              className="topbar-diagnostic-btn"
+   592→              title="Take Diagnostic Placement"
+   593→            >
+   594→              <Compass size={16} />
+   595→              <span>Diagnostic</span>
+   596→            </button>
+   597→
+   598→            {/* Quick Virtual Balance Display */}
+   599→            <div className="topbar-balance-pill" title="Virtual Account Balance">
+   600→              <DollarSign size={14} />
+   601→              <strong>${virtualBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+   602→              <button onClick={resetVirtualBalance} title="Reset to $10,000" className="balance-reset-btn">
+   603→                <RotateCcw size={12} />
+   604→              </button>
+   605→            </div>
+   606→
+   607→            {/* Search Input */}
+   608→            <div className="top-search">
+   609→              <Search size={17} />
+   610→              <input
+   611→                aria-label="Search lessons"
+   612→                placeholder="Search classes..."
+   613→                value={search}
+   614→                onChange={e => {
+   615→                  setSearch(e.target.value);
+   616→                  if (e.target.value) setSection("academy");
+   617→                }}
+   618→              />
+   619→              <span>⌘ K</span>
+   620→            </div>
+   621→
+   622→            <div className="topbar-divider" />
+   623→
+   624→            {/* User Profile / Sign In */}
+   625→            {user ? (
+   626→              <button className="profile-button" onClick={() => navigateTo("profile")}>
+   627→                <span className="avatar">{user.name.charAt(0).toUpperCase()}</span>
+   628→                <span className="profile-name">{user.name.split(" ")[0]}</span>
+   629→                <ChevronDown size={15} />
+   630→              </button>
+   631→            ) : (
+   632→              <button
+   633→                className="sign-in-button"
+   634→                onClick={() => {
+   635→                  setAuthMode("login");
+   636→                  setAuthOpen(true);
+   637→                }}
+   638→              >
+   639→                Sign In <ArrowRight size={15} />
+   640→              </button>
+   641→            )}
+   642→          </div>
+   643→        </header>
+   644→
+   645→        {/* Real-time Market Pulse & Community Activity Ribbon */}
+   646→        <LiveMarketTicker />
+   647→
+   648→        {toastNotice && (
+   649→          <div className="toast" role="status">
+   650→            <span>{toastNotice}</span>
+   651→            <button onClick={() => setToastNotice("")}><X size={15} /></button>
+   652→          </div>
+   653→        )}
+   654→
+   655→        {/* WORKSPACE SECTIONS ROUTING */}
+   656→        <main className="content">
+   657→          {/* 1. OVERVIEW & NETFLIX-STYLE MASTERCLASSES DASHBOARD */}
+   658→          {section === "dashboard" && (
+   659→            <div className="netflix-dashboard-container">
+   660→              {/* IMMERSIVE NETFLIX FEATURED HERO BANNER */}
+   661→              <div className="netflix-hero-spotlight">
+   662→                <div className="spotlight-backdrop-vignette" />
+   663→                <div className="spotlight-glow-lights" />
+   664→
+   665→                <div className="spotlight-content-area">
+   666→                  <div className="spotlight-tag-row">
+   667→                    <span className="spotlight-top-badge">
+   668→                      <Flame size={12} fill="currentColor" /> #1 IN FINANCIAL EDUCATION TODAY
+   669→                    </span>
+   670→                    <span className="spotlight-origin-badge">ATLAS ORIGINAL MASTERCLASS</span>
+   671→                  </div>
+   672→
+   673→                  <h1 className="spotlight-title">{featuredClass.title}</h1>
+   674→                  <p className="spotlight-tagline">{featuredClass.tagline}</p>
+   675→
+   676→                  <div className="spotlight-specs-row">
+   677→                    <span className="spotlight-match">99% Match for You</span>
+   678→                    <span className="spotlight-season">{featuredClass.seasonTag}</span>
+   679→                    <span className="spotlight-rating"><Star size={13} fill="#ffd43b" color="#ffd43b" /> 4.95 ★</span>
+   680→                    <span className="spotlight-quality">{featuredClass.qualityBadge}</span>
+   681→                  </div>
+   682→
+   683→                  <div className="spotlight-actions-row">
+   684→                    <button
+   685→                      onClick={() => openLesson(featuredClass.firstLessonId)}
+   686→                      className="spotlight-play-btn"
+   687→                    >
+   688→                      <Play size={18} fill="currentColor" />
+   689→                      <span>{completedCount > 0 ? "Resume Learning" : "Start Masterclass"}</span>
+   690→                    </button>
+   691→
+   692→                    <button
+   693→                      onClick={() => setSelectedMasterclass(featuredClass)}
+   694→                      className="spotlight-info-btn"
+   695→                    >
+   696→                      <CircleHelp size={18} />
+   697→                      <span>Class Overview & Episodes</span>
+   698→                    </button>
+   699→
+   700→                    <button
+   701→                      onClick={() => toggleSaveClass(featuredClass.id)}
+   702→                      className={`spotlight-list-btn ${savedClassIds.includes(featuredClass.id) ? "saved" : ""}`}
+   703→                    >
+   704→                      {savedClassIds.includes(featuredClass.id) ? <Check size={18} /> : <Plus size={18} />}
+   705→                      <span>{savedClassIds.includes(featuredClass.id) ? "In My List" : "Add to My List"}</span>
+   706→                    </button>
+   707→                  </div>
+   708→                </div>
+   709→              </div>
+   710→
+   711→              {/* NETFLIX CATEGORY FILTER TABS */}
+   712→              <div className="netflix-filter-pills-bar">
+   713→                {[
+   714→                  "All",
+   715→                  "Top 10",
+   716→                  "Forex Foundations",
+   717→                  "Risk Management",
+   718→                  "Technical Analysis",
+   719→                  "Binary Options",
+   720→                  "Trading Psychology",
+   721→                  "My List"
+   722→                ].map(cat => (
+   723→                  <button
+   724→                    key={cat}
+   725→                    onClick={() => setSelectedCategoryFilter(cat)}
+   726→                    className={`filter-pill-btn ${selectedCategoryFilter === cat ? "active" : ""}`}
+   727→                  >
+   728→                    {cat === "Top 10" && <Flame size={12} className="text-amber-400 mr-1" />}
+   729→                    {cat === "My List" && <ListPlus size={12} className="text-emerald-400 mr-1" />}
+   730→                    <span>{cat}</span>
+   731→                  </button>
+   732→                ))}
+   733→              </div>
+   734→
+   735→              {/* NETFLIX-STYLE HORIZONTAL CLASS RAILS */}
+   736→              <div className="netflix-rails-container">
+   737→                {/* RAIL 1: CONTINUE LEARNING (If in progress) */}
+   738→                {completedCount > 0 && (
+   739→                  <section className="netflix-rail-section">
+   740→                    <div className="rail-header-row">
+   741→                      <div className="rail-title-group">
+   742→                        <span className="rail-kicker">PICK UP WHERE YOU LEFT OFF</span>
+   743→                        <h3>Continue Learning & Practising</h3>
+   744→                      </div>
+   745→                      <span className="rail-count">{completedCount} Lessons Completed</span>
+   746→                    </div>
+   747→
+   748→                    <div className="netflix-cards-horizontal-scroll">
+   749→                      {MASTERCLASSES_CATALOG.filter(c => {
+   750→                        const classLessons = lessons.filter(l => l.pathId === c.pathId);
+   751→                        return classLessons.some(l => completed.includes(l.id));
+   752→                      }).map(mc => (
+   753→                        <NetflixCard
+   754→                          key={mc.id}
+   755→                          masterclass={mc}
+   756→                          completedLessons={completed}
+   757→                          allLessons={lessons}
+   758→                          onPlay={(lId) => openLesson(lId)}
+   759→                          onOpenDetails={(item) => setSelectedMasterclass(item)}
+   760→                          isSaved={savedClassIds.includes(mc.id)}
+   761→                          onToggleSaved={toggleSaveClass}
+   762→                        />
+   763→                      ))}
+   764→                    </div>
+   765→                  </section>
+   766→                )}
+   767→
+   768→                {/* RAIL 2: TOP 10 CLASSES IN TRADING ACADEMY TODAY */}
+   769→                <section className="netflix-rail-section">
+   770→                  <div className="rail-header-row">
+   771→                    <div className="rail-title-group">
+   772→                      <span className="rail-kicker">TOP RANKED</span>
+   773→                      <h3>Top 10 Classes in Trading Academy Today</h3>
+   774→                    </div>
+   775→                    <span className="rail-badge-top10"><Flame size={12} /> POPULAR</span>
+   776→                  </div>
+   777→
+   778→                  <div className="netflix-cards-horizontal-scroll">
+   779→                    {MASTERCLASSES_CATALOG.filter(c => c.top10Rank).map(mc => (
+   780→                      <NetflixCard
+   781→                        key={mc.id}
+   782→                        masterclass={mc}
+   783→                        rankNumber={mc.top10Rank}
+   784→                        completedLessons={completed}
+   785→                        allLessons={lessons}
+   786→                        onPlay={(lId) => openLesson(lId)}
+   787→                        onOpenDetails={(item) => setSelectedMasterclass(item)}
+   788→                        isSaved={savedClassIds.includes(mc.id)}
+   789→                        onToggleSaved={toggleSaveClass}
+   790→                      />
+   791→                    ))}
+   792→                  </div>
+   793→                </section>
+   794→
+   795→                {/* RAIL 3: CAPITAL DEFENSE & RISK LABS */}
+   796→                <section className="netflix-rail-section">
+   797→                  <div className="rail-header-row">
+   798→                    <div className="rail-title-group">
+   799→                      <span className="rail-kicker">ESSENTIAL DEFENSE</span>
+   800→                      <h3>Risk Management & Capital Defense Masterclasses</h3>
+   801→                    </div>
+   802→                    <button className="rail-view-all-btn" onClick={() => navigateTo("risk-lab")}>
+   803→                      Open Risk Lab <ArrowRight size={14} />
+   804→                    </button>
+   805→                  </div>
+   806→
+   807→                  <div className="netflix-cards-horizontal-scroll">
+   808→                    {MASTERCLASSES_CATALOG.filter(c => c.category === "Risk Management").map(mc => (
+   809→                      <NetflixCard
+   810→                        key={mc.id}
+   811→                        masterclass={mc}
+   812→                        completedLessons={completed}
+   813→                        allLessons={lessons}
+   814→                        onPlay={(lId) => openLesson(lId)}
+   815→                        onOpenDetails={(item) => setSelectedMasterclass(item)}
+   816→                        isSaved={savedClassIds.includes(mc.id)}
+   817→                        onToggleSaved={toggleSaveClass}
+   818→                      />
+   819→                    ))}
+   820→                  </div>
+   821→                </section>
+   822→
+   823→                {/* RAIL 4: MARKET STRUCTURE & CANDLESTICKS */}
+   824→                <section className="netflix-rail-section">
+   825→                  <div className="rail-header-row">
+   826→                    <div className="rail-title-group">
+   827→                      <span className="rail-kicker">VISUAL PRICE ACTION</span>
+   828→                      <h3>Market Structure & Candlestick Deep Dives</h3>
+   829→                    </div>
+   830→                    <button className="rail-view-all-btn" onClick={() => navigateTo("trading-lab")}>
+   831→                      Open Replay Lab <ArrowRight size={14} />
+   832→                    </button>
+   833→                  </div>
+   834→
+   835→                  <div className="netflix-cards-horizontal-scroll">
+   836→                    {MASTERCLASSES_CATALOG.filter(c => c.category === "Technical Analysis" || c.category === "Forex Foundations").map(mc => (
+   837→                      <NetflixCard
+   838→                        key={mc.id}
+   839→                        masterclass={mc}
+   840→                        completedLessons={completed}
+   841→                        allLessons={lessons}
+   842→                        onPlay={(lId) => openLesson(lId)}
+   843→                        onOpenDetails={(item) => setSelectedMasterclass(item)}
+   844→                        isSaved={savedClassIds.includes(mc.id)}
+   845→                        onToggleSaved={toggleSaveClass}
+   846→                      />
+   847→                    ))}
+   848→                  </div>
+   849→                </section>
+   850→
+   851→                {/* RAIL 5: EXPOSING BINARY OPTIONS */}
+   852→                <section className="netflix-rail-section">
+   853→                  <div className="rail-header-row">
+   854→                    <div className="rail-title-group">
+   855→                      <span className="rail-kicker">MATHEMATICAL TRUTHS</span>
+   856→                      <h3>Exposing Binary Options: Expected Value & Broker Edge</h3>
+   857→                    </div>
+   858→                    <button className="rail-view-all-btn" onClick={() => navigateTo("binary-lab")}>
+   859→                      Open Binary Lab <ArrowRight size={14} />
+   860→                    </button>
+   861→                  </div>
+   862→
+   863→                  <div className="netflix-cards-horizontal-scroll">
+   864→                    {MASTERCLASSES_CATALOG.filter(c => c.category === "Binary Options").map(mc => (
+   865→                      <NetflixCard
+   866→                        key={mc.id}
+   867→                        masterclass={mc}
+   868→                        completedLessons={completed}
+   869→                        allLessons={lessons}
+   870→                        onPlay={(lId) => openLesson(lId)}
+   871→                        onOpenDetails={(item) => setSelectedMasterclass(item)}
+   872→                        isSaved={savedClassIds.includes(mc.id)}
+   873→                        onToggleSaved={toggleSaveClass}
+   874→                      />
+   875→                    ))}
+   876→                  </div>
+   877→                </section>
+   878→              </div>
+   879→            </div>
+   880→          )}
+   881→
+   882→          {/* 2. ACADEMY & INTERACTIVE LESSON PLAYER */}
+   883→          {section === "academy" && (
+   884→            currentLesson ? (
+   885→              /* FULL INTERACTIVE LESSON / MASTERCLASS PLAYER */
+   886→              <InteractiveLessonPlayer
+   887→                lesson={currentLesson}
+   888→                allLessons={lessons}
+   889→                completedLessons={completed}
+   890→                onCompleteLesson={handleLessonAssessment}
+   891→                onSelectLesson={openLesson}
+   892→                onBackToClasses={() => setActiveLessonId(null)}
+   893→                userXp={experiencePoints}
+   894→              />
+   895→            ) : (
+   896→              /* ACADEMY CATALOG VIEW */
+   897→              <div className="academy-catalog-page">
+   898→                <div className="page-heading">
+   899→                  <div>
+   900→                    <div className="eyebrow">
+   901→                      <span className="eyebrow-line" /> STRUCTURED CURRICULUM
+   902→                    </div>
+   903→                    <h1>Masterclasses & Curriculum Pathways<span className="title-dot">.</span></h1>
+   904→                    <p>Select any class card to preview episodes, study key principles, and engage in interactive candlestick scenarios.</p>
+   905→                  </div>
+   906→                </div>
+   907→
+   908→                <div className="netflix-cards-grid">
+   909→                  {filteredMasterclasses.map(mc => (
+   910→                    <NetflixCard
+   911→                      key={mc.id}
+   912→                      masterclass={mc}
+   913→                      completedLessons={completed}
+   914→                      allLessons={lessons}
+   915→                      onPlay={(lId) => openLesson(lId)}
+   916→                      onOpenDetails={(item) => setSelectedMasterclass(item)}
+   917→                      isSaved={savedClassIds.includes(mc.id)}
+   918→                      onToggleSaved={toggleSaveClass}
+   919→                    />
+   920→                  ))}
+   921→                </div>
+   922→              </div>
+   923→            )
+   924→          )}
+   925→
+   926→          {/* 3. TRADING REPLAY LAB */}
+   927→          {section === "trading-lab" && (
+   928→            <TradingLab
+   929→              user={user ? { ...user, virtualBalance } : null}
+   930→              onTradeCompleted={() => {
+   931→                setExperiencePoints(xp => xp + 25);
+   932→              }}
+   933→            />
+   934→          )}
+   935→
+   936→          {/* 4. RISK MANAGEMENT LABORATORY */}
+   937→          {section === "risk-lab" && <RiskLaboratory />}
+   938→
+   939→          {/* 5. BINARY OPTIONS EDUCATIONAL LAB */}
+   940→          {section === "binary-lab" && (
+   941→            <BinaryOptionsLab
+   942→              user={user ? { ...user, virtualBalance } : null}
+   943→              onTradeCompleted={() => {
+   944→                setExperiencePoints(xp => xp + 20);
+   945→              }}
+   946→            />
+   947→          )}
+   948→
+   949→          {/* 6. DAILY REVISION QUEUE (SPACED REPETITION) */}
+   950→          {section === "revision" && <RevisionDeck />}
+   951→
+   952→          {/* 7. AI LEARNING COACH */}
+   953→          {section === "coach" && (
+   954→            <>
+   955→              <div className="page-heading">
+   956→                <div>
+   957→                  <div className="eyebrow">
+   958→                    <span className="eyebrow-line" /> AI LEARNING COACH
+   959→                  </div>
+   960→                  <h1>Your Contextual Study Partner<span className="title-dot">.</span></h1>
+   961→                  <p>Ask questions about terminology, risk mathematics, or trade post-mortems grounded in verified Academy material.</p>
+   962→                </div>
+   963→                <div className="heading-symbol">
+   964→                  <Sparkles size={30} />
+   965→                </div>
+   966→              </div>
+   967→
+   968→              <div className="coach-layout">
+   969→                <div className="coach-chat">
+   970→                  <div className="coach-chat-head">
+   971→                    <div className="coach-avatar">
+   972→                      <Sparkles size={20} />
+   973→                    </div>
+   974→                    <div>
+   975→                      <strong>Atlas Learning Coach</strong>
+   976→                      <span><span className="online-dot" /> Verified Knowledge Retrieval</span>
+   977→                    </div>
+   978→                    <div className="coach-head-note">APPROVED LESSONS ONLY</div>
+   979→                  </div>
+   980→
+   981→                  <div className="coach-chat-body">
+   982→                    {coachHistory.map((item, i) => (
+   983→                      <div key={i}>
+   984→                        <div className="user-message">
+   985→                          <div>{item.question}</div>
+   986→                        </div>
+   987→
+   988→                        <div className="coach-message">
+   989→                          <div className="coach-msg-icon">
+   990→                            <Sparkles size={16} />
+   991→                          </div>
+   992→                          <div className="coach-bubble">
+   993→                            <div style={{ whiteSpace: "pre-line" }}>{item.answer}</div>
+   994→                            {item.related && item.related.length > 0 && (
+   995→                              <div className="coach-related-links">
+   996→                                <span>Suggested Lessons:</span>
+   997→                                {item.related.map(r => (
+   998→                                  <button key={r.id} onClick={() => openLesson(r.id)}>
+   999→                                    <BookOpen size={13} /> {r.title}
+  1000→                                  </button>
+  1001→                                ))}
+  1002→                              </div>
+  1003→                            )}
+  1004→                          </div>
+  1005→                        </div>
+  1006→                      </div>
+  1007→                    ))}
+  1008→                    {coachBusy && (
+  1009→                      <div className="coach-message">
+  1010→                        <div className="coach-msg-icon">
+  1011→                          <Sparkles size={16} />
+  1012→                        </div>
+  1013→                        <div className="coach-bubble">
+  1014→                          <em>Formulating verified explanation...</em>
+  1015→                        </div>
+  1016→                      </div>
+  1017→                    )}
+  1018→                  </div>
+  1019→
+  1020→                  <form className="coach-input" onSubmit={handleAskCoach}>
+  1021→                    <input
+  1022→                      value={coachInput}
+  1023→                      onChange={e => setCoachInput(e.target.value)}
+  1024→                      placeholder="Ask about pips, lot sizing formulas, drawdowns, or binary options..."
+  1025→                      aria-label="Ask Coach"
+  1026→                    />
+  1027→                    <button disabled={!coachInput.trim() || coachBusy} aria-label="Send">
+  1028→                      <Send size={18} />
+  1029→                    </button>
+  1030→                  </form>
+  1031→
+  1032→                  <div className="coach-disclaimer">
+  1033→                    Educational explanations only. No real-time price predictions or personalized financial advice.
+  1034→                  </div>
+  1035→                </div>
+  1036→
+  1037→                <div className="coach-prompts">
+  1038→                  <div className="eyebrow small">COMMON INQUIRIES</div>
+  1039→                  <h3>Suggested Topics</h3>
+  1040→                  {[
+  1041→                    "How do I calculate position size from my stop distance?",
+  1042→                    "Why does an 80% payout binary option have negative EV?",
+  1043→                    "Explain the difference between Market, Limit and Stop orders",
+  1044→                    "Why is a 50% drawdown so difficult to recover from?"
+  1045→                  ].map(prompt => (
+  1046→                    <button
+  1047→                      key={prompt}
+  1048→                      onClick={() => {
+  1049→                        setCoachInput(prompt);
+  1050→                      }}
+  1051→                    >
+  1052→                      <span><Lightbulb size={16} />{prompt}</span>
+  1053→                      <ArrowUpRight size={16} />
+  1054→                    </button>
+  1055→                  ))}
+  1056→
+  1057→                  <div className="coach-note">
+  1058→                    <ShieldCheck size={18} />
+  1059→                    <p>All explanations are retrieved from verified lesson specifications and risk management mathematics.</p>
+  1060→                  </div>
+  1061→                </div>
+  1062→              </div>
+  1063→            </>
+  1064→          )}
+  1065→
+  1066→          {/* 8. SKILLS & PERFORMANCE ANALYTICS */}
+  1067→          {section === "progress" && (
+  1068→            <>
+  1069→              <div className="page-heading">
+  1070→                <div>
+  1071→                  <div className="eyebrow">
+  1072→                    <span className="eyebrow-line" /> DEMONSTRATED EVIDENCE
+  1073→                  </div>
+  1074→                  <h1>Skill Map & Progression Analytics<span className="title-dot">.</span></h1>
+  1075→                  <p>Transparent evidence across six skill mastery states: Not Started, Learning, Developing, Practising, Demonstrated, and Needs Revision.</p>
+  1076→                </div>
+  1077→                <div className="heading-symbol">
+  1078→                  <TrendingUp size={30} />
+  1079→                </div>
+  1080→              </div>
+  1081→
+  1082→              {/* Progress Summary Banner */}
+  1083→              <div className="progress-banner">
+  1084→                <div>
+  1085→                  <span>CURRICULUM MASTERY GAUGE</span>
+  1086→                  <h2>{completedCount} of {lessons.length} Modules Demonstrated</h2>
+  1087→                  <p>Overall Level {Math.floor(experiencePoints / 100) + 1} ({experiencePoints} Total XP)</p>
+  1088→                </div>
+  1089→                <strong>{progressPercent}%</strong>
+  1090→                <div className="progress-banner-bar">
+  1091→                  <div style={{ width: `${progressPercent}%` }} />
+  1092→                </div>
+  1093→              </div>
+  1094→
+  1095→              {/* 6-State Skill Mastery Grid */}
+  1096→              <div className="section-title-row">
+  1097→                <div>
+  1098→                  <div className="eyebrow small">SKILLS TAXONOMY</div>
+  1099→                  <h3>Individual Skill Mastery States</h3>
+  1100→                </div>
+  1101→              </div>
+  1102→
+  1103→              <div className="skill-grid">
+  1104→                {SKILLS_TAXONOMY.map(skill => {
+  1105→                  const associatedLesson = lessons.find(l => l.skillIds.includes(skill.id));
+  1106→                  const isDone = associatedLesson && completed.includes(associatedLesson.id);
+  1107→                  const isUnlockedSkill = associatedLesson && isUnlocked(associatedLesson, completed);
+  1108→
+  1109→                  const state = isDone ? "Demonstrated" : isUnlockedSkill ? "Developing" : "Not Started";
+  1110→
+  1111→                  return (
+  1112→                    <div
+  1113→                      key={skill.id}
+  1114→                      className={`skill-card ${isDone ? "skill-done" : ""}`}
+  1115→                    >
+  1116→                      <div className="skill-top">
+  1117→                        <span>{skill.code}</span>
+  1118→                        {isDone ? (
+  1119→                          <CheckCircle2 size={21} className="icon-demonstrated" />
+  1120→                        ) : isUnlockedSkill ? (
+  1121→                          <Circle size={20} className="icon-developing" />
+  1122→                        ) : (
+  1123→                          <LockKeyhole size={18} className="icon-locked" />
+  1124→                        )}
+  1125→                      </div>
+  1126→
+  1127→                      <h4>{skill.name}</h4>
+  1128→                      <p>{skill.description}</p>
+  1129→
+  1130→                      <div className="skill-bottom-row">
+  1131→                        <span className={`skill-status-pill ${state.toLowerCase().replace(" ", "-")}`}>
+  1132→                          {state.toUpperCase()}
+  1133→                        </span>
+  1134→                        {associatedLesson && (
+  1135→                          <button
+  1136→                            onClick={() => openLesson(associatedLesson.id)}
+  1137→                            className="skill-goto-btn"
+  1138→                          >
+  1139→                            Study Lesson <ArrowRight size={12} />
+  1140→                          </button>
+  1141→                        )}
+  1142→                      </div>
+  1143→                    </div>
+  1144→                  );
+  1145→                })}
+  1146→              </div>
+  1147→            </>
+  1148→          )}
+  1149→
+  1150→          {/* 9. ADMIN KNOWLEDGE STUDIO */}
+  1151→          {section === "studio" && (
+  1152→            isAdmin ? (
+  1153→              <>
+  1154→                <div className="page-heading">
+  1155→                  <div>
+  1156→                    <div className="eyebrow">
+  1157→                      <span className="eyebrow-line" /> CONTENT AUTHORING
+  1158→                    </div>
+  1159→                    <h1>Knowledge Studio<span className="title-dot">.</span></h1>
+  1160→                    <p>Draft, validate, and publish new courses, chapters, and assessment quizzes without code redeployments.</p>
+  1161→                  </div>
+  1162→                  <button className="primary-button" onClick={() => setStudioModalOpen(true)}>
+  1163→                    <Plus size={17} /> Author New Lesson Draft
+  1164→                  </button>
+  1165→                </div>
+  1166→
+  1167→                <div className="studio-hero">
+  1168→                  <div>
+  1169→                    <span>AUTHORING PIPELINE</span>
+  1170→                    <h2>Evolve The Academy With New Content</h2>
+  1171→                    <p>
+  1172→                      Created modules automatically integrate into the curriculum hierarchy, evaluate prerequisites, and distribute to eligible learners.
+  1173→                    </p>
+  1174→                  </div>
+  1175→                  <FileText size={80} strokeWidth={1} />
+  1176→                </div>
+  1177→
+  1178→                <div className="section-title-row">
+  1179→                  <div>
+  1180→                    <div className="eyebrow small">DATABASE REPOSITORY</div>
+  1181→                    <h3>Authored Curriculum Drafts</h3>
+  1182→                  </div>
+  1183→                  <span className="chapter-count">{draftsList.length} Lessons</span>
+  1184→                </div>
+  1185→
+  1186→                {draftsList.length > 0 ? (
+  1187→                  <div className="studio-list">
+  1188→                    {draftsList.map(item => (
+  1189→                      <div className="studio-row" key={item.id}>
+  1190→                        <div className="studio-row-icon">
+  1191→                          <FileText size={21} />
+  1192→                        </div>
+  1193→                        <div>
+  1194→                          <strong>{item.title}</strong>
+  1195→                          <span>{item.category} · Status: {item.status.toUpperCase()} · v{item.version}</span>
+  1196→                        </div>
+  1197→                        {item.status === "draft" && user?.role !== "editor" ? (
+  1198→                          <button onClick={() => publishLesson(item.id)}>
+  1199→                            Publish To Academy <ArrowRight size={15} />
+  1200→                          </button>
+  1201→                        ) : (
+  1202→                          <span className="published-label">
+  1203→                            <CheckCircle2 size={16} /> Published Live
+  1204→                          </span>
+  1205→                        )}
+  1206→                      </div>
+  1207→                    ))}
+  1208→                  </div>
+  1209→                ) : (
+  1210→                  <div className="empty-state">
+  1211→                    No custom drafts in database yet. Click “Author New Lesson Draft” above to create your first dynamic module.
+  1212→                  </div>
+  1213→                )}
+  1214→
+  1215→                {/* Studio Authoring Modal */}
+  1216→                {studioModalOpen && (
+  1217→                  <div className="modal-backdrop" onClick={() => setStudioModalOpen(false)}>
+  1218→                    <div className="studio-modal" onClick={e => e.stopPropagation()}>
+  1219→                      <button className="modal-close" onClick={() => setStudioModalOpen(false)}>
+  1220→                        <X size={20} />
+  1221→                      </button>
+  1222→
+  1223→                      <div className="eyebrow small">NEW CURRICULUM MODULE</div>
+  1224→                      <h2>Author Lesson & Verification Assessment</h2>
+  1225→                      <p>Drafts are private until validated and published.</p>
+  1226→
+  1227→                      <form onSubmit={handleSaveDraft} className="studio-form">
+  1228→                        <div className="form-two">
+  1229→                          <label>
+  1230→                            Lesson Title:
+  1231→                            <input name="title" required placeholder="e.g. Managing Overnight Financing & Swaps" />
+  1232→                          </label>
+  1233→                          <label>
+  1234→                            Learning Path:
+  1235→                            <select name="pathId" defaultValue="forex-foundations">
+  1236→                              {LEARNING_PATHS.map(p => (
+  1237→                                <option key={p.id} value={p.id}>{p.title}</option>
+  1238→                              ))}
+  1239→                            </select>
+  1240→                          </label>
+  1241→                        </div>
+  1242→
+  1243→                        <div className="form-two">
+  1244→                          <label>
+  1245→                            Category:
+  1246→                            <input name="category" required defaultValue="Forex foundations" />
+  1247→                          </label>
+  1248→                          <label>
+  1249→                            Level:
+  1250→                            <select name="level" defaultValue="Beginner">
+  1251→                              <option value="Beginner">Beginner</option>
+  1252→                              <option value="Developing">Developing</option>
+  1253→                              <option value="Advanced">Advanced</option>
+  1254→                            </select>
+  1255→                          </label>
+  1256→                        </div>
+  1257→
+  1258→                        <label>
+  1259→                          Short Description:
+  1260→                          <input name="description" required placeholder="What concept will the learner understand?" />
+  1261→                        </label>
+  1262→
+  1263→                        <div className="form-two">
+  1264→                          <label>
+  1265→                            Estimated Read Minutes:
+  1266→                            <input name="duration" type="number" min="1" max="60" defaultValue="8" required />
+  1267→                          </label>
+  1268→                          <label>
+  1269→                            Prerequisite Lesson:
+  1270→                            <select name="prerequisiteId">
+  1271→                              <option value="">None (Open to all learners)</option>
+  1272→                              {lessons.map(l => (
+  1273→                                <option key={l.id} value={l.id}>{l.title}</option>
+  1274→                              ))}
+  1275→                            </select>
+  1276→                          </label>
+  1277→                        </div>
+  1278→
+  1279→                        <label>
+  1280→                          Lesson Content (Paragraphs):
+  1281→                          <textarea
+  1282→                            name="content"
+  1283→                            required
+  1284→                            rows={6}
+  1285→                            placeholder="Write comprehensive educational content. Separate paragraphs with double newlines."
+  1286→                          />
+  1287→                        </label>
+  1288→
+  1289→                        <label>
+  1290→                          Core Takeaway Sentence:
+  1291→                          <input name="takeaway" required placeholder="One memorable sentence summary." />
+  1292→                        </label>
+  1293→
+  1294→                        <label>
+  1295→                          Assessment Verification Question:
+  1296→                          <input name="question" required placeholder="A clear multiple choice question." />
+  1297→                        </label>
+  1298→
+  1299→                        <div className="form-two">
+  1300→                          {[0, 1, 2, 3].map(i => (
+  1301→                            <label key={i}>
+  1302→                              Option {String.fromCharCode(65 + i)}:
+  1303→                              <input name={`option${i}`} required placeholder={`Answer option ${i + 1}`} />
+  1304→                            </label>
+  1305→                          ))}
+  1306→                        </div>
+  1307→
+  1308→                        <div className="form-two">
+  1309→                          <label>
+  1310→                            Correct Answer:
+  1311→                            <select name="answer" defaultValue="0">
+  1312→                              {[0, 1, 2, 3].map(i => (
+  1313→                                <option key={i} value={i}>Option {String.fromCharCode(65 + i)}</option>
+  1314→                              ))}
+  1315→                            </select>
+  1316→                          </label>
+  1317→
+  1318→                          <label>
+  1319→                            Answer Explanation Rationale:
+  1320→                            <input name="explanation" required placeholder="Why is this answer correct?" />
+  1321→                          </label>
+  1322→                        </div>
+  1323→
+  1324→                        {studioError && <div className="form-error">{studioError}</div>}
+  1325→
+  1326→                        <button className="primary-button" disabled={studioBusy}>
+  1327→                          {studioBusy ? "Saving Draft..." : "Save Draft To Database"}
+  1328→                          <ArrowRight size={17} />
+  1329→                        </button>
+  1330→                      </form>
+  1331→                    </div>
+  1332→                  </div>
+  1333→                )}
+  1334→              </>
+  1335→            ) : (
+  1336→              <div className="restricted">
+  1337→                <LockKeyhole size={32} />
+  1338→                <h2>Administrator Access Required</h2>
+  1339→                <p>The Knowledge Studio is reserved for platform editors and owners.</p>
+  1340→                <button className="primary-button" onClick={() => navigateTo("dashboard")}>
+  1341→                  Return to Dashboard
+  1342→                </button>
+  1343→              </div>
+  1344→            )
+  1345→          )}
+  1346→
+  1347→          {/* 10. PROFILE & SETTINGS */}
+  1348→          {section === "profile" && (
+  1349→            <>
+  1350→              <div className="page-heading">
+  1351→                <div>
+  1352→                  <div className="eyebrow">
+  1353→                    <span className="eyebrow-line" /> LEARNER PROFILE
+  1354→                  </div>
+  1355→                  <h1>Account & Preferences<span className="title-dot">.</span></h1>
+  1356→                  <p>Manage your virtual account balance, persona calibration, and learning credentials.</p>
+  1357→                </div>
+  1358→              </div>
+  1359→
+  1360→              <div className="profile-card">
+  1361→                <div className="profile-large-avatar">
+  1362→                  {user?.name.charAt(0).toUpperCase() || "G"}
+  1363→                </div>
+  1364→                <div>
+  1365→                  <h2>{user?.name || "Guest Explorer"}</h2>
+  1366→                  <p>{user?.email || "Exploring via local browser session"}</p>
+  1367→                  <span>Role: {user?.role.toUpperCase() || "LEARNER"} · Persona: {activePersona.toUpperCase()}</span>
+  1368→                </div>
+  1369→              </div>
+  1370→
+  1371→              {/* Persona Switcher Box */}
+  1372→              <div className="persona-settings-box">
+  1373→                <h4>Calibrate Learner Persona:</h4>
+  1374→                <div className="persona-buttons-row">
+  1375→                  <button
+  1376→                    onClick={() => switchPersona("beginner")}
+  1377→                    className={`persona-btn ${activePersona === "beginner" ? "active" : ""}`}
+  1378→                  >
+  1379→                    Persona A: Beginner
+  1380→                  </button>
+  1381→                  <button
+  1382→                    onClick={() => switchPersona("developing")}
+  1383→                    className={`persona-btn ${activePersona === "developing" ? "active" : ""}`}
+  1384→                  >
+  1385→                    Persona B: Developing
+  1386→                  </button>
+  1387→                  <button
+  1388→                    onClick={() => switchPersona("advanced")}
+  1389→                    className={`persona-btn ${activePersona === "advanced" ? "active" : ""}`}
+  1390→                  >
+  1391→                    Persona C: Advanced
+  1392→                  </button>
+  1393→                </div>
+  1394→              </div>
+  1395→
+  1396→              {/* Virtual Balance Controls */}
+  1397→              <div className="profile-actions">
+  1398→                <div>
+  1399→                  <strong>Virtual Account Funds ($10,000 Starting)</strong>
+  1400→                  <p>Current balance: ${virtualBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
+  1401→                </div>
+  1402→                <button onClick={resetVirtualBalance} className="reset-action-btn">
+  1403→                  <RotateCcw size={16} /> Reset Balance to $10,000
+  1404→                </button>
+  1405→              </div>
+  1406→
+  1407→              <div className="profile-actions">
+  1408→                {user ? (
+  1409→                  <>
+  1410→                    <div>
+  1411→                      <strong>Account Persistence</strong>
+  1412→                      <p>Your lesson completions and simulated trades are stored in PostgreSQL.</p>
+  1413→                    </div>
+  1414→                    <button onClick={handleLogout}>
+  1415→                      <LogOut size={17} /> Sign Out
+  1416→                    </button>
+  1417→                  </>
+  1418→                ) : (
+  1419→                  <>
+  1420→                    <div>
+  1421→                      <strong>Save Progress Across Devices</strong>
+  1422→                      <p>Create a free account to sync progress and unlock administrative capabilities.</p>
+  1423→                    </div>
+  1424→                    <button onClick={() => { setAuthMode("register"); setAuthOpen(true); }}>
+  1425→                      Create Account <ArrowRight size={16} />
+  1426→                    </button>
+  1427→                  </>
+  1428→                )}
+  1429→              </div>
+  1430→            </>
+  1431→          )}
+  1432→        </main>
+  1433→
+  1434→        {/* Global Footer */}
+  1435→        <footer className="app-footer">
+  1436→          <span>© 2026 Atlas Academy</span>
+  1437→          <span>Education first. Virtual examples only. Strictly not financial advice.</span>
+  1438→          <span>Adaptive Progression Platform v1.0</span>
+  1439→        </footer>
+  1440→      </div>
+  1441→
+  1442→      {/* NETFLIX-STYLE CLASS DETAIL PREVIEW MODAL */}
+  1443→      <ClassDetailModal
+  1444→        masterclass={selectedMasterclass}
+  1445→        isOpen={!!selectedMasterclass}
+  1446→        onClose={() => setSelectedMasterclass(null)}
+  1447→        onPlayLesson={(lessonId) => openLesson(lessonId)}
+  1448→        onLaunchLab={(labType) => navigateTo(labType)}
+  1449→        completedLessons={completed}
+  1450→        allLessons={lessons}
+  1451→        isSaved={selectedMasterclass ? savedClassIds.includes(selectedMasterclass.id) : false}
+  1452→        onToggleSaved={toggleSaveClass}
+  1453→      />
+  1454→
+  1455→      {/* Guest Mode Floating Banner */}
+  1456→      {!user && (
+  1457→        <div className="guest-banner">
+  1458→          <div>
+  1459→            <span className="guest-banner-icon"><Sparkles size={16} /></span>
+  1460→            <strong>Exploring as a Guest</strong>
+  1461→            <span> — Create a free account to sync your verified skill mastery.</span>
+  1462→          </div>
+  1463→          <button onClick={() => { setAuthMode("register"); setAuthOpen(true); }}>
+  1464→            Create Free Account <ArrowRight size={15} />
+  1465→          </button>
+  1466→          <button className="guest-close" onClick={e => (e.currentTarget.parentElement!.style.display = "none")} aria-label="Dismiss">
+  1467→            <X size={17} />
+  1468→          </button>
+  1469→        </div>
+  1470→      )}
+  1471→
+  1472→      {/* Diagnostic Placement Modal */}
+  1473→      <DiagnosticModal
+  1474→        isOpen={diagnosticOpen}
+  1475→        onClose={() => setDiagnosticOpen(false)}
+  1476→        onCompleted={(level) => {
+  1477→          setActivePersona(level.toLowerCase());
+  1478→          setToastNotice(`Diagnostic complete: Calibrated to Persona Level ${level}!`);
+  1479→          setTimeout(() => setToastNotice(""), 4000);
+  1480→        }}
+  1481→      />
+  1482→
+  1483→      {/* Authentication Modal */}
+  1484→      {authOpen && (
+  1485→        <div className="modal-backdrop" onClick={() => setAuthOpen(false)}>
+  1486→          <div className="auth-modal" onClick={e => e.stopPropagation()}>
+  1487→            <button className="modal-close" onClick={() => setAuthOpen(false)} aria-label="Close">
+  1488→              <X size={20} />
+  1489→            </button>
+  1490→
+  1491→            <div className="auth-logo">
+  1492→              <div className="brand-mark"><span>◆</span></div>
+  1493→              <span>atlas<span>.</span></span>
+  1494→            </div>
+  1495→
+  1496→            <div className="eyebrow small">AUTHENTICATED WORKSPACE</div>
+  1497→            <h2>{authMode === "register" ? "Create Free Academy Account" : "Welcome Back"}</h2>
+  1498→            <p>{authMode === "register" ? "Track demonstrated skills and virtual trading history." : "Sign in to pick up right where you left off."}</p>
+  1499→
+  1500→            <form onSubmit={handleAuthSubmit}>
+  1501→              {authMode === "register" && (
+  1502→                <label>
+  1503→                  Full Name:
+  1504→                  <input name="name" required minLength={2} placeholder="Jordan Smith" autoComplete="name" />
+  1505→                </label>
+  1506→              )}
+  1507→              <label>
+  1508→                Email Address:
+  1509→                <input name="email" required type="email" placeholder="learner@example.com" autoComplete="email" />
+  1510→              </label>
+  1511→              <label>
+  1512→                Password:
+  1513→                <input name="password" required type="password" minLength={8} placeholder="Minimum 8 characters" autoComplete={authMode === "login" ? "current-password" : "new-password"} />
+  1514→              </label>
+  1515→
+  1516→              {authError && <div className="form-error">{authError}</div>}
+  1517→
+  1518→              <button className="primary-button" disabled={authBusy}>
+  1519→                {authBusy ? "Authenticating..." : authMode === "register" ? "Create Account" : "Sign In"}
+  1520→                <ArrowRight size={17} />
+  1521→              </button>
+  1522→            </form>
+  1523→
+  1524→            <div className="auth-switch">
+  1525→              {authMode === "register" ? "Already have an account?" : "New to Atlas?"}{" "}
+  1526→              <button onClick={() => { setAuthError(""); setAuthMode(authMode === "register" ? "login" : "register"); }}>
+  1527→                {authMode === "register" ? "Sign In" : "Register"}
+  1528→              </button>
+  1529→            </div>
+  1530→
+  1531→            <div className="auth-foot">
+  1532→              <ShieldCheck size={15} /> Educational Platform · Zero Real-Money Deposits
+  1533→            </div>
+  1534→          </div>
+  1535→        </div>
+  1536→      )}
+  1537→    </div>
+  1538→  );
+  1539→}
+  1540→

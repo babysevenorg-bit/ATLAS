@@ -1,30 +1,37 @@
 # .vercelignore — files excluded from Vercel build uploads.
 # These are sandbox artifacts, NOT part of the Atlas Academy application.
+#
+# IMPORTANT: patterns with a leading "/" are anchored to the repo root.
+# Without a leading "/", a pattern like "db/" would match ANY directory
+# named "db" at any level — including src/db/ which contains the Prisma
+# client code that the build NEEDS.
 
 # Sandbox skill definitions (Python scripts, not part of the Next.js app)
-skills/
+/skills/
 
 # Original uploaded source code (already migrated into src/)
-upload/
+/upload/
 
 # Sandbox tool outputs
-tool-results/
+/tool-results/
 
 # Sandbox test scripts
-tests/
+/tests/
 
 # Dev artifacts
 dev.log
 server.log
-.zscripts/
-agent-ctx/
+/.zscripts/
+/agent-ctx/
 
-# Don't re-upload the local database
-db/
+# Don't re-upload the local SQLite database (root db/ directory only)
+# NOTE: the leading "/" is critical — without it, "db/" would also
+# exclude src/db/ which contains the Prisma client singleton.
+/db/
 *.db
 *.db-journal
 
 # Don't upload the .env (Vercel uses its own env vars)
-.env
-.env.local
-.env.*.local
+/.env
+/.env.local
+/.env.*.local

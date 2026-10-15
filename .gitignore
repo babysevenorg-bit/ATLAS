@@ -20,8 +20,10 @@ next-env.d.ts
 .env.test.local
 .env.production.local
 
-# Database (SQLite local file — users should run `bun run db:push` to recreate)
-db/
+# Database (SQLite local file — root /db/ directory only.
+# The leading "/" is critical: "db/" would also exclude src/db/
+# which contains the Prisma client code.)
+/db/
 *.db
 *.db-journal
 

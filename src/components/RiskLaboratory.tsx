@@ -14,11 +14,23 @@ import {
   DollarSign,
   HelpCircle,
   BarChart3,
-  Flame
+  Flame,
+  Gauge,
+  Scissors,
+  Network,
+  Zap,
 } from "lucide-react";
 
 export default function RiskLaboratory() {
-  const [activeTab, setActiveTab] = useState<"position_sizing" | "ruin_simulator" | "rr_matrix" | "drawdown_curve">("position_sizing");
+  const [activeTab, setActiveTab] = useState<
+    | "position_sizing"
+    | "ruin_simulator"
+    | "rr_matrix"
+    | "drawdown_curve"
+    | "leverage_margin"
+    | "spread_slippage"
+    | "correlation_risk"
+  >("position_sizing");
 
   // Tab 1: Position Sizing State
   const [balance, setBalance] = useState("10000");
@@ -38,6 +50,29 @@ export default function RiskLaboratory() {
 
   // Tab 4: Drawdown Recovery State
   const [drawdownPercent, setDrawdownPercent] = useState("30");
+
+  // Tab 5: Leverage & Margin Call State
+  const [levBalance, setLevBalance] = useState("10000");
+  const [leverageRatio, setLeverageRatio] = useState("30");
+  const [levLots, setLevLots] = useState("1.0");
+  const [levSymbol, setLevSymbol] = useState("EUR/USD");
+  const [priceMovePips, setPriceMovePips] = useState("50");
+
+  // Tab 6: Spread & Slippage Cost State
+  const [spreadPips, setSpreadPips] = useState("1.5");
+  const [slippagePips, setSlippagePips] = useState("0.5");
+  const [commissionPerLot, setCommissionPerLot] = useState("7.0");
+  const [tradesPerMonth, setTradesPerMonth] = useState("20");
+  const [costLotSize, setCostLotSize] = useState("1.0");
+
+  // Tab 7: Correlation Risk State
+  const [portfolioPositions, setPortfolioPositions] = useState<
+    { symbol: string; lots: number; direction: "BUY" | "SELL" }[]
+  >([
+    { symbol: "EUR/USD", lots: 1.0, direction: "BUY" },
+    { symbol: "GBP/USD", lots: 0.8, direction: "BUY" },
+    { symbol: "USD/JPY", lots: 0.5, direction: "SELL" },
+  ]);
 
   // --- Calculations for Tab 1 (Position Sizing) ---
   const numBalance = Math.max(0, Number(balance) || 10000);
@@ -73,6 +108,67 @@ export default function RiskLaboratory() {
   const numDd = Number(drawdownPercent) || 30;
   const requiredRecoveryPercent = numDd < 100 ? Math.round(((numDd / (100 - numDd)) * 100) * 10) / 10 : 9999;
   const remainingCapital = numBalance * (1 - numDd / 100);
+
+  // --- Calculations for Tab 5 (Leverage & Margin Call) ---
+  const numLevBalance = Math.max(100, Number(levBalance) || 10000);
+  const numLeverage = Math.max(1, Math.min(500, Number(leverageRatio) || 30));
+  const numLevLots = Math.max(0.01, Number(levLots) || 1.0);
+  const numPriceMovePips = Number(priceMovePips) || 50;
+  const notionalValue = numLevLots * 100000; // standard lot = 100k units
+  const requiredMargin = notionalValue / numLeverage;
+  const marginUsagePct = (requiredMargin / numLevBalance) * 100;
+  const isMarginCallLikely = requiredMargin > numLevBalance;
+  // Pip value ~$10 per standard lot for USD-quoted pairs
+  const pipValueUsd = levSymbol.includes("JPY") ? 1000 / 150 : 10;
+  const pipValueForLots = numLevLots * pipValueUsd;
+  const pnlOnAdverseMove = -numPriceMovePips * pipValueForLots;
+  const equityAfterAdverseMove = numLevBalance + pnlOnAdverseMove;
+  const marginLevelAfter = equityAfterAdverseMove > 0 ? (equityAfterAdverseMove / requiredMargin) * 100 : 0;
+  const marginCallTriggered = marginLevelAfter < 100 && requiredMargin > 0;
+  const stopOutTriggered = marginLevelAfter < 50 && requiredMargin > 0;
+
+  // --- Calculations for Tab 6 (Spread & Slippage) ---
+  const numSpreadPips = Math.max(0, Number(spreadPips) || 0);
+  const numSlippagePips = Math.max(0, Number(slippagePips) || 0);
+  const numCommission = Math.max(0, Number(commissionPerLot) || 0);
+  const numTradesPerMonth = Math.max(1, Number(tradesPerMonth) || 20);
+  const numCostLots = Math.max(0.01, Number(costLotSize) || 1.0);
+  const costPerTrade = (numSpreadPips + numSlippagePips) * numCostLots * 10 + numCommission * numCostLots;
+  const monthlyCost = costPerTrade * numTradesPerMonth;
+  const annualCost = monthlyCost * 12;
+  const annualCostPctOfBalance = (annualCost / numBalance) * 100;
+  // Break-even win rate uplift required: each trade starts at -costPerTrade
+  // For 1:2 R:R with $100 risk budget, breakeven moves from 33.3% → (1 + cost/risk) / (1 + R + cost/risk)
+  const riskBudgetPerTrade = numBalance * 0.01; // 1% risk assumption
+  const costAsPctOfRisk = (costPerTrade / riskBudgetPerTrade) * 100;
+
+  // --- Calculations for Tab 7 (Correlation Risk) ---
+  // Synthetic correlation matrix (educational approximation)
+  const correlationMatrix: Record<string, Record<string, number>> = {
+    "EUR/USD": { "EUR/USD": 1.0, "GBP/USD": 0.75, "USD/JPY": -0.65, "AUD/USD": 0.55, "XAU/USD": 0.35 },
+    "GBP/USD": { "EUR/USD": 0.75, "GBP/USD": 1.0, "USD/JPY": -0.55, "AUD/USD": 0.45, "XAU/USD": 0.25 },
+    "USD/JPY": { "EUR/USD": -0.65, "GBP/USD": -0.55, "USD/JPY": 1.0, "AUD/USD": -0.45, "XAU/USD": -0.30 },
+    "AUD/USD": { "EUR/USD": 0.55, "GBP/USD": 0.45, "USD/JPY": -0.45, "AUD/USD": 1.0, "XAU/USD": 0.40 },
+    "XAU/USD": { "EUR/USD": 0.35, "GBP/USD": 0.25, "USD/JPY": -0.30, "AUD/USD": 0.40, "XAU/USD": 1.0 },
+  };
+  // Calculate effective risk: with correlated positions, total risk > sum if same direction on correlated pairs
+  const positionRisks = portfolioPositions.map(p => ({ ...p, riskPct: p.lots * 0.5 })); // 0.5% per lot baseline
+  const naiveRiskSum = positionRisks.reduce((s, p) => s + p.riskPct, 0);
+  // Effective portfolio variance using correlation
+  let portfolioVariance = 0;
+  for (let i = 0; i < positionRisks.length; i++) {
+    for (let j = 0; j < positionRisks.length; j++) {
+      const ri = positionRisks[i].riskPct;
+      const rj = positionRisks[j].riskPct;
+      const corr = correlationMatrix[positionRisks[i].symbol]?.[positionRisks[j].symbol] ?? 0;
+      const dirSign = positionRisks[i].direction === positionRisks[j].direction ? 1 : -1;
+      portfolioVariance += ri * rj * corr * dirSign;
+    }
+  }
+  const effectiveRisk = Math.sqrt(Math.max(0, portfolioVariance));
+  const riskAmplification = naiveRiskSum > 0 ? effectiveRisk / naiveRiskSum : 1;
+  const diversificationBenefit = Math.max(0, naiveRiskSum - effectiveRisk);
+  const isOverconcentrated = riskAmplification > 0.9 && portfolioPositions.length > 1;
 
   return (
     <div className="risk-lab-container">
@@ -113,6 +209,24 @@ export default function RiskLaboratory() {
             className={`risk-tab-btn ${activeTab === "drawdown_curve" ? "active" : ""}`}
           >
             <TrendingDown size={16} /> Drawdown Curve
+          </button>
+          <button
+            onClick={() => setActiveTab("leverage_margin")}
+            className={`risk-tab-btn ${activeTab === "leverage_margin" ? "active" : ""}`}
+          >
+            <Gauge size={16} /> Leverage & Margin
+          </button>
+          <button
+            onClick={() => setActiveTab("spread_slippage")}
+            className={`risk-tab-btn ${activeTab === "spread_slippage" ? "active" : ""}`}
+          >
+            <Scissors size={16} /> Spread & Slippage
+          </button>
+          <button
+            onClick={() => setActiveTab("correlation_risk")}
+            className={`risk-tab-btn ${activeTab === "correlation_risk" ? "active" : ""}`}
+          >
+            <Network size={16} /> Correlation Risk
           </button>
         </div>
       </div>
@@ -448,6 +562,334 @@ export default function RiskLaboratory() {
                   : "SAFE RECOVERY ZONE: Keep drawdowns under 15-20% to ensure recovery requires modest, achievable market gains."}
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: Leverage & Margin Call Simulator */}
+      {activeTab === "leverage_margin" && (
+        <div className="risk-grid-layout">
+          <div className="risk-card input-card">
+            <h3>Leverage & Margin Call Visualizer</h3>
+            <p className="card-desc">
+              Leverage amplifies both gains and losses. Adjust the ratio to see how a routine adverse price move triggers margin calls and forced liquidation.
+            </p>
+
+            <div className="risk-fields-grid">
+              <label>
+                <span>Virtual Account Balance ($)</span>
+                <input type="number" min="100" step="500" value={levBalance} onChange={e => setLevBalance(e.target.value)} />
+              </label>
+              <label>
+                <span>Leverage Ratio (1 : X)</span>
+                <select value={leverageRatio} onChange={e => setLeverageRatio(e.target.value)}>
+                  <option value="1">1:1 (No leverage)</option>
+                  <option value="5">1:5 (Conservative)</option>
+                  <option value="10">1:10</option>
+                  <option value="30">1:30 (EU Retail Cap)</option>
+                  <option value="50">1:50 (US Forex)</option>
+                  <option value="100">1:100</option>
+                  <option value="200">1:200</option>
+                  <option value="500">1:500 (Offshore)</option>
+                </select>
+              </label>
+              <label>
+                <span>Position Size (Lots)</span>
+                <input type="number" min="0.01" step="0.1" value={levLots} onChange={e => setLevLots(e.target.value)} />
+              </label>
+              <label>
+                <span>Adverse Price Move (Pips)</span>
+                <input type="number" min="1" max="500" step="5" value={priceMovePips} onChange={e => setPriceMovePips(e.target.value)} />
+              </label>
+              <label>
+                <span>Instrument</span>
+                <select value={levSymbol} onChange={e => setLevSymbol(e.target.value)}>
+                  <option value="EUR/USD">EUR/USD</option>
+                  <option value="GBP/USD">GBP/USD</option>
+                  <option value="USD/JPY">USD/JPY</option>
+                  <option value="AUD/USD">AUD/USD</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="formula-callout">
+              <strong>Notional Value = Lots × 100,000</strong>
+              <code>Required Margin = Notional ÷ Leverage | Margin Level % = Equity ÷ Required Margin × 100</code>
+            </div>
+          </div>
+
+          <div className="risk-card output-card">
+            <h3>Margin Stress Test</h3>
+            <div className="primary-output-box">
+              <span>REQUIRED MARGIN</span>
+              <strong style={{ color: marginUsagePct > 100 ? "#ff8787" : "#c9ed85" }}>
+                ${requiredMargin.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </strong>
+              <p>{marginUsagePct.toFixed(1)}% of your equity locked as margin</p>
+            </div>
+
+            <div className="output-specs-list">
+              <div className="spec-row">
+                <span>Notional Position Value:</span>
+                <strong>${notionalValue.toLocaleString()}</strong>
+              </div>
+              <div className="spec-row">
+                <span>Pip Value (per pip):</span>
+                <strong>${pipValueForLots.toFixed(2)}</strong>
+              </div>
+              <div className="spec-row">
+                <span>P&L on {numPriceMovePips}-pip adverse move:</span>
+                <strong style={{ color: pnlOnAdverseMove < -100 ? "#ff8787" : "#ffd43b" }}>
+                  ${pnlOnAdverseMove.toFixed(2)}
+                </strong>
+              </div>
+              <div className="spec-row">
+                <span>Equity After Adverse Move:</span>
+                <strong style={{ color: equityAfterAdverseMove < 0 ? "#ff8787" : "white" }}>
+                  ${equityAfterAdverseMove.toFixed(2)}
+                </strong>
+              </div>
+              <div className="spec-row">
+                <span>Margin Level After Move:</span>
+                <strong style={{ color: marginLevelAfter < 100 ? "#ff8787" : marginLevelAfter < 200 ? "#ffd43b" : "#c9ed85" }}>
+                  {marginLevelAfter.toFixed(1)}%
+                </strong>
+              </div>
+            </div>
+
+            {marginCallTriggered ? (
+              <div className="safety-badge" style={{ background: "#5a1a1a", color: "#ffd0d0" }}>
+                <AlertTriangle size={16} />
+                <span>
+                  <strong>MARGIN CALL TRIGGERED.</strong> Margin level fell below 100%. Broker demands additional deposit or your position will be force-liquidated.
+                </span>
+              </div>
+            ) : (
+              <div className="safety-badge">
+                <ShieldCheck size={16} />
+                <span>
+                  Margin level remains above 100% after the adverse move. Account survives this scenario.
+                </span>
+              </div>
+            )}
+
+            {stopOutTriggered && (
+              <div className="safety-badge" style={{ background: "#7a1010", color: "#ffe0e0", marginTop: 8 }}>
+                <Zap size={16} />
+                <span>
+                  <strong>STOP-OUT EXECUTED.</strong> Margin level under 50% — broker forcibly closed your position at market price. Loss locked in.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: Spread & Slippage Cost Analyzer */}
+      {activeTab === "spread_slippage" && (
+        <div className="risk-grid-layout">
+          <div className="risk-card input-card">
+            <h3>Transaction Cost Erosion Analyzer</h3>
+            <p className="card-desc">
+              Every trade pays a hidden tax: spread, slippage, and commission. These silent costs reshape your break-even win rate — often invisibly eroding otherwise profitable strategies.
+            </p>
+
+            <div className="risk-fields-grid">
+              <label>
+                <span>Spread (Pips)</span>
+                <input type="number" min="0" step="0.1" value={spreadPips} onChange={e => setSpreadPips(e.target.value)} />
+              </label>
+              <label>
+                <span>Slippage (Pips)</span>
+                <input type="number" min="0" step="0.1" value={slippagePips} onChange={e => setSlippagePips(e.target.value)} />
+              </label>
+              <label>
+                <span>Commission ($/Lot round-trip)</span>
+                <input type="number" min="0" step="0.5" value={commissionPerLot} onChange={e => setCommissionPerLot(e.target.value)} />
+              </label>
+              <label>
+                <span>Trades per Month</span>
+                <input type="number" min="1" step="5" value={tradesPerMonth} onChange={e => setTradesPerMonth(e.target.value)} />
+              </label>
+              <label>
+                <span>Lot Size per Trade</span>
+                <input type="number" min="0.01" step="0.1" value={costLotSize} onChange={e => setCostLotSize(e.target.value)} />
+              </label>
+              <label>
+                <span>Reference Balance ($)</span>
+                <input type="number" min="100" step="500" value={balance} onChange={e => setBalance(e.target.value)} />
+              </label>
+            </div>
+
+            <div className="formula-callout">
+              <strong>Cost Per Trade = (Spread + Slippage) × Pip Value × Lots + Commission × Lots</strong>
+              <code>Monthly Drain = Cost × Trades | Annual % = (Annual Cost ÷ Balance) × 100</code>
+            </div>
+          </div>
+
+          <div className="risk-card output-card">
+            <h3>Transaction Cost Audit</h3>
+            <div className="primary-output-box">
+              <span>COST PER TRADE</span>
+              <strong style={{ color: costPerTrade > 20 ? "#ff8787" : "#ffd43b" }}>
+                ${costPerTrade.toFixed(2)}
+              </strong>
+              <p>Round-trip cost on every executed trade</p>
+            </div>
+
+            <div className="output-specs-list">
+              <div className="spec-row">
+                <span>Monthly Cost Drain:</span>
+                <strong>${monthlyCost.toFixed(2)}</strong>
+              </div>
+              <div className="spec-row">
+                <span>Annual Cost Drain:</span>
+                <strong style={{ color: annualCostPctOfBalance > 5 ? "#ff8787" : "#c9ed85" }}>
+                  ${annualCost.toFixed(2)} ({annualCostPctOfBalance.toFixed(2)}%)
+                </strong>
+              </div>
+              <div className="spec-row">
+                <span>Cost as % of Risk Budget (1%):</span>
+                <strong style={{ color: costAsPctOfRisk > 20 ? "#ff8787" : "#ffd43b" }}>
+                  {costAsPctOfRisk.toFixed(1)}%
+                </strong>
+              </div>
+              <div className="spec-row">
+                <span>Trades to Lose 10% (cost-only):</span>
+                <strong>{Math.floor((numBalance * 0.1) / costPerTrade)} trades</strong>
+              </div>
+            </div>
+
+            <div className="insight-card">
+              <Info size={16} />
+              <p>
+                {costAsPctOfRisk > 20
+                  ? `⚠️ CRITICAL: Transaction costs eat ${costAsPctOfRisk.toFixed(0)}% of every trade's risk budget. A strategy that returns +1R is actually net negative after costs. Reduce trade frequency, use limit orders, or trade cheaper pairs.`
+                  : `Healthy cost structure. Costs consume ${costAsPctOfRisk.toFixed(1)}% of your 1% risk budget — most directional strategies can absorb this friction.`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 7: Correlation Risk & Diversification */}
+      {activeTab === "correlation_risk" && (
+        <div className="risk-grid-layout">
+          <div className="risk-card input-card">
+            <h3>Correlation Risk & Diversification</h3>
+            <p className="card-desc">
+              A portfolio of correlated positions is a single disguised bet. Visualise how your open positions amplify — or hedge — each other.
+            </p>
+
+            <div className="portfolio-editor">
+              {portfolioPositions.map((pos, idx) => (
+                <div key={idx} className="portfolio-row">
+                  <select
+                    value={pos.symbol}
+                    onChange={e => {
+                      const next = [...portfolioPositions];
+                      next[idx] = { ...pos, symbol: e.target.value };
+                      setPortfolioPositions(next);
+                    }}
+                  >
+                    <option value="EUR/USD">EUR/USD</option>
+                    <option value="GBP/USD">GBP/USD</option>
+                    <option value="USD/JPY">USD/JPY</option>
+                    <option value="AUD/USD">AUD/USD</option>
+                    <option value="XAU/USD">XAU/USD</option>
+                  </select>
+                  <select
+                    value={pos.direction}
+                    onChange={e => {
+                      const next = [...portfolioPositions];
+                      next[idx] = { ...pos, direction: e.target.value as "BUY" | "SELL" };
+                      setPortfolioPositions(next);
+                    }}
+                  >
+                    <option value="BUY">BUY (Long)</option>
+                    <option value="SELL">SELL (Short)</option>
+                  </select>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.1"
+                    value={pos.lots}
+                    onChange={e => {
+                      const next = [...portfolioPositions];
+                      next[idx] = { ...pos, lots: Math.max(0.01, Number(e.target.value) || 0.01) };
+                      setPortfolioPositions(next);
+                    }}
+                  />
+                  <button
+                    className="remove-position-btn"
+                    onClick={() => setPortfolioPositions(portfolioPositions.filter((_, i) => i !== idx))}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                className="add-position-btn"
+                onClick={() => setPortfolioPositions([...portfolioPositions, { symbol: "EUR/USD", lots: 0.5, direction: "BUY" }])}
+              >
+                + Add Position
+              </button>
+            </div>
+
+            <div className="formula-callout">
+              <strong>Effective Portfolio Risk = √(Σᵢ Σⱼ rᵢ·rⱼ·ρᵢⱼ·sign(direction))</strong>
+              <code>Diversification Benefit = Naïve Sum − Effective Risk</code>
+            </div>
+          </div>
+
+          <div className="risk-card output-card">
+            <h3>Portfolio Risk Audit</h3>
+            <div className="primary-output-box">
+              <span>EFFECTIVE RISK</span>
+              <strong style={{ color: effectiveRisk > 3 ? "#ff8787" : effectiveRisk > 1.5 ? "#ffd43b" : "#c9ed85" }}>
+                {effectiveRisk.toFixed(2)}%
+              </strong>
+              <p>Naïve sum: {naiveRiskSum.toFixed(2)}% | Amplification: ×{riskAmplification.toFixed(2)}</p>
+            </div>
+
+            <div className="output-specs-list">
+              <div className="spec-row">
+                <span>Naïve Risk Sum:</span>
+                <strong>{naiveRiskSum.toFixed(2)}%</strong>
+              </div>
+              <div className="spec-row">
+                <span>Effective Portfolio Risk:</span>
+                <strong style={{ color: effectiveRisk > naiveRiskSum ? "#ff8787" : "#c9ed85" }}>
+                  {effectiveRisk.toFixed(2)}%
+                </strong>
+              </div>
+              <div className="spec-row">
+                <span>Diversification Benefit:</span>
+                <strong style={{ color: diversificationBenefit > 0 ? "#c9ed85" : "#ff8787" }}>
+                  {diversificationBenefit > 0 ? `−${diversificationBenefit.toFixed(2)}%` : `+${Math.abs(diversificationBenefit).toFixed(2)}% amplification`}
+                </strong>
+              </div>
+              <div className="spec-row">
+                <span>Open Positions:</span>
+                <strong>{portfolioPositions.length}</strong>
+              </div>
+            </div>
+
+            {isOverconcentrated ? (
+              <div className="safety-badge" style={{ background: "#5a3a10", color: "#ffe0b0" }}>
+                <AlertTriangle size={16} />
+                <span>
+                  <strong>OVER-CONCENTRATED.</strong> Your positions are highly correlated in the same direction. A single macro shock (e.g. USD strength) will hit them all simultaneously — you are not diversified, you are leveraged.
+                </span>
+              </div>
+            ) : (
+              <div className="safety-badge">
+                <Network size={16} />
+                <span>
+                  Reasonable diversification. Correlations are partially offsetting, so total portfolio risk is lower than the naïve sum of individual risks.
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

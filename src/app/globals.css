@@ -2274,3 +2274,271 @@ a { text-decoration: none; color: inherit; }
   .netflix-card-wrapper.has-rank { flex: 0 0 300px; }
   .analytics-metrics-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   NEW SIMULATIONS — Backtest Arena, Monte Carlo, Risk Lab Tabs
+   ============================================================ */
+
+/* Strategy Card Selector */
+.backtest-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.strategy-card {
+  background: white;
+  border: 1px solid #e3ebe0;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.strategy-card:hover {
+  border-color: #b3d9a8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(20, 50, 35, 0.06);
+}
+.strategy-card.active {
+  border-color: #5fbf6f;
+  background: #f3faee;
+  box-shadow: 0 4px 14px rgba(95, 191, 111, 0.18);
+}
+.strategy-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #223e31;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.strategy-card.active .strategy-icon-row { color: #2f7a3d; }
+.strategy-card p {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #6b8174;
+  margin: 0;
+}
+
+/* Run Backtest Button */
+.run-backtest-btn {
+  margin-top: 16px;
+  background: #1d4d3a;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.run-backtest-btn:hover { background: #2a6a52; }
+.reset-mc-btn {
+  margin-top: 16px;
+  background: transparent;
+  color: #5a7568;
+  border: 1px solid #c5d3c8;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.reset-mc-btn:hover { background: #f5f9f3; color: #2a4535; }
+
+/* Backtest empty state */
+.backtest-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: #8aa097;
+}
+.backtest-empty p { font-size: 11px; line-height: 1.6; margin: 0; max-width: 280px; }
+
+/* Equity curve chart */
+.equity-curve-chart {
+  background: #fafdf8;
+  border: 1px solid #e8eee6;
+  border-radius: 8px;
+  padding: 12px;
+  overflow: hidden;
+}
+.equity-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 10px;
+  color: #6b8174;
+  justify-content: center;
+}
+.equity-legend span { display: flex; align-items: center; gap: 5px; }
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* Trades table */
+.trades-table-wrapper { overflow-x: auto; max-height: 380px; overflow-y: auto; border-radius: 6px; border: 1px solid #e8eee6; }
+.trades-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+.trades-table th {
+  background: #f5f9f3;
+  padding: 8px 6px;
+  text-align: left;
+  font-weight: 700;
+  color: #3d5a48;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.trades-table td {
+  padding: 6px;
+  border-top: 1px solid #eef3ec;
+  color: #2c4438;
+  font-family: 'JetBrains Mono', monospace;
+}
+.trades-table tr.win-row { background: #f7fcf5; }
+.trades-table tr.loss-row { background: #fdf6f5; }
+.dir-badge {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+}
+.dir-badge.buy { background: #e3f6e6; color: #2f7a3d; }
+.dir-badge.sell { background: #ffe3e3; color: #c43c3c; }
+.outcome-pill {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 700;
+}
+.outcome-pill.win { background: #d4f0d9; color: #2f7a3d; }
+.outcome-pill.loss { background: #ffd6d6; color: #c43c3c; }
+.rationale-cell {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  color: #5a7568;
+  max-width: 220px;
+  white-space: normal;
+}
+.table-footer-note {
+  text-align: center;
+  font-size: 10px;
+  color: #8aa097;
+  padding: 8px;
+}
+
+/* Portfolio editor (correlation risk) */
+.portfolio-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.portfolio-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.7fr 0.7fr;
+  gap: 6px;
+  align-items: center;
+}
+.portfolio-row select,
+.portfolio-row input {
+  width: 100%;
+  border: 1px solid #dde6db;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #2b4535;
+  background: white;
+}
+.remove-position-btn {
+  background: #fff0f0;
+  color: #c43c3c;
+  border: 1px solid #ffcccc;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.remove-position-btn:hover { background: #ffe3e3; }
+.add-position-btn {
+  background: #f5f9f3;
+  color: #2a6a52;
+  border: 1px dashed #b3d9a8;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+.add-position-btn:hover { background: #eef5e8; }
+
+/* Monte Carlo stats grid */
+.mc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.mc-stat-tile {
+  background: #163832;
+  color: white;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+.mc-stat-tile span {
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: #a9cfbe;
+  text-transform: uppercase;
+}
+.mc-stat-tile strong {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+.mc-stat-tile p {
+  font-size: 9px;
+  color: #9bc2b0;
+  margin: 0;
+  line-height: 1.5;
+}
+.mc-stat-tile svg { color: #c9ed85; margin: 0 auto 4px; }
+
+/* Mobile tweaks for new components */
+@media (max-width: 768px) {
+  .backtest-strategy-grid { grid-template-columns: 1fr; }
+  .portfolio-row { grid-template-columns: 1fr 1fr; }
+  .remove-position-btn { grid-column: span 2; }
+  .mc-stats-grid { grid-template-columns: 1fr 1fr; }
+  .trades-table { font-size: 9px; }
+  .trades-table th, .trades-table td { padding: 4px 3px; }
+  .rationale-cell { max-width: 120px; }
+}

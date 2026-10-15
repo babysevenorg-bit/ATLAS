@@ -53,7 +53,9 @@ import {
   Star,
   Film,
   ListPlus,
-  Cpu
+  Cpu,
+  Activity,
+  Gauge
 } from "lucide-react";
 
 import type { Lesson, LearningPathMeta, Skill, Masterclass } from "@/lib/curriculum";
@@ -62,6 +64,8 @@ import TradingLab from "@/components/TradingLab";
 import BinaryOptionsLab from "@/components/BinaryOptionsLab";
 import RiskLaboratory from "@/components/RiskLaboratory";
 import RevisionDeck from "@/components/RevisionDeck";
+import BacktestArena from "@/components/BacktestArena";
+import MonteCarloEquity from "@/components/MonteCarloEquity";
 import DiagnosticModal from "@/components/DiagnosticModal";
 import PublicPortal from "@/components/PublicPortal";
 import LiveMarketTicker from "@/components/LiveMarketTicker";
@@ -91,6 +95,8 @@ const navItems = [
   { id: "academy", label: "Academy & Classes", icon: BookOpen },
   { id: "trading-lab", label: "Trading Lab", icon: ChartNoAxesCombined, badge: "REPLAY" },
   { id: "risk-lab", label: "Risk Laboratory", icon: Calculator },
+  { id: "backtest", label: "Backtest Arena", icon: Cpu, badge: "NEW" },
+  { id: "monte-carlo", label: "Monte Carlo Lab", icon: Activity, badge: "NEW" },
   { id: "binary-lab", label: "Binary Options Lab", icon: SplitSquareVertical },
   { id: "revision", label: "Daily Revision", icon: BrainCircuit, badge: "DUE" },
   { id: "coach", label: "AI Learning Coach", icon: Sparkles },
@@ -573,6 +579,8 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
             <strong>
               {section === "trading-lab" && "Trading Replay Lab"}
               {section === "risk-lab" && "Risk Management Laboratory"}
+              {section === "backtest" && "Strategy Backtest Arena"}
+              {section === "monte-carlo" && "Monte Carlo Equity Simulator"}
               {section === "binary-lab" && "Binary Options Educational Lab"}
               {section === "revision" && "Daily Revision Queue"}
               {section === "coach" && "AI Learning Coach"}
@@ -935,6 +943,12 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
 
           {/* 4. RISK MANAGEMENT LABORATORY */}
           {section === "risk-lab" && <RiskLaboratory />}
+
+          {/* 4b. STRATEGY BACKTEST ARENA */}
+          {section === "backtest" && <BacktestArena />}
+
+          {/* 4c. MONTE CARLO EQUITY SIMULATOR */}
+          {section === "monte-carlo" && <MonteCarloEquity />}
 
           {/* 5. BINARY OPTIONS EDUCATIONAL LAB */}
           {section === "binary-lab" && (

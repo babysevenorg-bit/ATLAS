@@ -10,6 +10,8 @@ const allowed = [
   "academy",
   "trading-lab",
   "risk-lab",
+  "backtest",
+  "monte-carlo",
   "binary-lab",
   "revision",
   "coach",

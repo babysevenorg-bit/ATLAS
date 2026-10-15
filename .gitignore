@@ -47,6 +47,12 @@ Thumbs.db
 upload/
 tool-results/
 
+# Sandbox skill definitions (not part of the deployed app)
+skills/
+
+# Sandbox test scripts
+tests/
+
 # Agent browser / sandbox artifacts
 .zscripts/dev.log
 .zscripts/dev.pid

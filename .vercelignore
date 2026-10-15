@@ -1,0 +1,30 @@
+# .vercelignore — files excluded from Vercel build uploads.
+# These are sandbox artifacts, NOT part of the Atlas Academy application.
+
+# Sandbox skill definitions (Python scripts, not part of the Next.js app)
+skills/
+
+# Original uploaded source code (already migrated into src/)
+upload/
+
+# Sandbox tool outputs
+tool-results/
+
+# Sandbox test scripts
+tests/
+
+# Dev artifacts
+dev.log
+server.log
+.zscripts/
+agent-ctx/
+
+# Don't re-upload the local database
+db/
+*.db
+*.db-journal
+
+# Don't upload the .env (Vercel uses its own env vars)
+.env
+.env.local
+.env.*.local

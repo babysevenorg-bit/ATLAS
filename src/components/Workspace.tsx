@@ -55,7 +55,9 @@ import {
   ListPlus,
   Cpu,
   Activity,
-  Gauge
+  Gauge,
+  Globe2,
+  Rocket
 } from "lucide-react";
 
 import type { Lesson, LearningPathMeta, Skill, Masterclass } from "@/lib/curriculum";
@@ -66,6 +68,9 @@ import RiskLaboratory from "@/components/RiskLaboratory";
 import RevisionDeck from "@/components/RevisionDeck";
 import BacktestArena from "@/components/BacktestArena";
 import MonteCarloEquity from "@/components/MonteCarloEquity";
+import SkillUniverse3D from "@/components/SkillUniverse3D";
+import LearningAnalyticsDashboard from "@/components/LearningAnalyticsDashboard";
+import AdaptiveOnboarding from "@/components/AdaptiveOnboarding";
 import DiagnosticModal from "@/components/DiagnosticModal";
 import PublicPortal from "@/components/PublicPortal";
 import LiveMarketTicker from "@/components/LiveMarketTicker";
@@ -97,6 +102,8 @@ const navItems = [
   { id: "risk-lab", label: "Risk Laboratory", icon: Calculator },
   { id: "backtest", label: "Backtest Arena", icon: Cpu, badge: "NEW" },
   { id: "monte-carlo", label: "Monte Carlo Lab", icon: Activity, badge: "NEW" },
+  { id: "skill-universe", label: "3D Skill Universe", icon: Globe2, badge: "3D" },
+  { id: "analytics", label: "Learning Analytics", icon: BarChart3, badge: "NEW" },
   { id: "binary-lab", label: "Binary Options Lab", icon: SplitSquareVertical },
   { id: "revision", label: "Daily Revision", icon: BrainCircuit, badge: "DUE" },
   { id: "coach", label: "AI Learning Coach", icon: Sparkles },
@@ -581,6 +588,8 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
               {section === "risk-lab" && "Risk Management Laboratory"}
               {section === "backtest" && "Strategy Backtest Arena"}
               {section === "monte-carlo" && "Monte Carlo Equity Simulator"}
+              {section === "skill-universe" && "3D Skill Universe"}
+              {section === "analytics" && "Learning Analytics Dashboard"}
               {section === "binary-lab" && "Binary Options Educational Lab"}
               {section === "revision" && "Daily Revision Queue"}
               {section === "coach" && "AI Learning Coach"}
@@ -949,6 +958,38 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
 
           {/* 4c. MONTE CARLO EQUITY SIMULATOR */}
           {section === "monte-carlo" && <MonteCarloEquity />}
+
+          {/* 4d. 3D SKILL UNIVERSE */}
+          {section === "skill-universe" && (
+            <SkillUniverse3D
+              completedLessonIds={completed}
+              lessons={lessons.map(l => ({ id: l.id, skillIds: l.skillIds }))}
+            />
+          )}
+
+          {/* 4e. LEARNING ANALYTICS DASHBOARD */}
+          {section === "analytics" && (
+            <LearningAnalyticsDashboard
+              user={user ? { id: user.id, experiencePoints, streakDays: user.persona ? 1 : 1, persona: user.persona } : null}
+            />
+          )}
+
+          {/* 4f. ADAPTIVE ONBOARDING (if user hasn't completed it) */}
+          {section === "onboarding" && user && (
+            <AdaptiveOnboarding
+              onComplete={async (profile) => {
+                try {
+                  await fetch("/api/onboarding", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(profile),
+                  });
+                  setExperiencePoints(xp => xp + 25);
+                  navigateTo("dashboard");
+                } catch {}
+              }}
+            />
+          )}
 
           {/* 5. BINARY OPTIONS EDUCATIONAL LAB */}
           {section === "binary-lab" && (

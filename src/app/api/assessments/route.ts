@@ -84,26 +84,30 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // 3. Update skill mastery states
+      // 3. Update skill mastery states + record state transitions (history)
       if (lesson.skillIds && lesson.skillIds.length > 0) {
         for (const skillId of lesson.skillIds) {
           const existingMastery = await tx.learnerSkillMastery.findUnique({
             where: { userId_skillId: { userId: user.id, skillId } },
           });
 
+          const newState = correct
+            ? "demonstrated"
+            : existingMastery?.state === "demonstrated"
+              ? "demonstrated"
+              : "developing";
+          const prevEvidence = existingMastery?.evidenceScore ?? 0;
+          const newEvidence = correct
+            ? Math.min(100, prevEvidence + 25)
+            : prevEvidence;
+          const prevState = existingMastery?.state ?? "not_started";
+
           if (existingMastery) {
             await tx.learnerSkillMastery.update({
               where: { id: existingMastery.id },
               data: {
-                state:
-                  correct
-                    ? "demonstrated"
-                    : existingMastery.state === "demonstrated"
-                      ? "demonstrated"
-                      : "developing",
-                evidenceScore: correct
-                  ? Math.min(100, existingMastery.evidenceScore + 25)
-                  : existingMastery.evidenceScore,
+                state: newState,
+                evidenceScore: newEvidence,
                 lastAssessedAt: new Date(),
               },
             });
@@ -113,9 +117,25 @@ export async function POST(request: NextRequest) {
                 id: randomUUID(),
                 userId: user.id,
                 skillId,
-                state: correct ? "demonstrated" : "developing",
+                state: newState,
                 evidenceScore: correct ? 80 : 40,
                 lastAssessedAt: new Date(),
+              },
+            });
+          }
+
+          // Append a SkillStateHistory row whenever state changes
+          if (newState !== prevState || newEvidence !== prevEvidence) {
+            await tx.skillStateHistory.create({
+              data: {
+                id: randomUUID(),
+                userId: user.id,
+                skillId,
+                previousState: prevState,
+                newState,
+                evidenceScoreDelta: newEvidence - prevEvidence,
+                triggerLessonId: lessonId,
+                triggerActivity: "assessment",
               },
             });
           }
@@ -150,6 +170,47 @@ export async function POST(request: NextRequest) {
           data: {
             experiencePoints: { increment: 50 },
             lastActiveAt: new Date(),
+          },
+        });
+      }
+
+      // 5. Record a LearningSession entry (analytics + heatmap source-of-truth)
+      // Look for an active session in the last 30 minutes; extend it, else create new.
+      const recentSessionCutoff = new Date(Date.now() - 30 * 60 * 1000);
+      const recentSession = await tx.learningSession.findFirst({
+        where: {
+          userId: user.id,
+          startedAt: { gte: recentSessionCutoff },
+          endedAt: null,
+        },
+        orderBy: { startedAt: "desc" },
+      });
+      if (recentSession) {
+        await tx.learningSession.update({
+          where: { id: recentSession.id },
+          data: {
+            assessmentsAnswered: recentSession.assessmentsAnswered + 1,
+            xpEarned: recentSession.xpEarned + (correct ? 50 : 0),
+            lessonsCompleted:
+              recentSession.lessonsCompleted + (correct && !current?.completed ? 1 : 0),
+            endedAt: new Date(),
+            durationSec:
+              recentSession.durationSec +
+              Math.floor((Date.now() - recentSession.startedAt.getTime()) / 1000),
+          },
+        });
+      } else {
+        await tx.learningSession.create({
+          data: {
+            id: randomUUID(),
+            userId: user.id,
+            startedAt: new Date(),
+            endedAt: new Date(),
+            durationSec: 60,
+            lessonsCompleted: correct && !current?.completed ? 1 : 0,
+            assessmentsAnswered: 1,
+            xpEarned: correct ? 50 : 0,
+            activityType: "study",
           },
         });
       }

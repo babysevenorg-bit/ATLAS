@@ -23,6 +23,13 @@ model User {
   lastActiveAt     DateTime @default(now()) @map("last_active_at")
   createdAt        DateTime @default(now()) @map("created_at")
 
+  // Adaptive Onboarding Profile (Phase 2 architecture advance)
+  onboardingCompleted Boolean @default(false) @map("onboarding_completed")
+  learningGoal       String  @default("")  @map("learning_goal")       // 'career' | 'hobby' | 'income' | 'education'
+  dailyGoalMinutes    Int     @default(20)   @map("daily_goal_minutes")  // 5 / 15 / 20 / 30 / 60
+  learningStyle       String  @default("mixed") @map("learning_style")  // 'visual' | 'reading' | 'interactive' | 'mixed'
+  studyReminderHour   Int?    @map("study_reminder_hour")                // 0-23 UTC, null = no reminder
+
   sessions            Session[]
   progress            Progress[]
   assessmentAttempts  AssessmentAttempt[]
@@ -31,6 +38,8 @@ model User {
   revisionQueue      RevisionQueue[]
   simOrders           SimOrder[]
   binarySims          BinarySim[]
+  learningSessions    LearningSession[]
+  skillStateHistory   SkillStateHistory[]
 
   @@map("users")
 }
@@ -223,4 +232,51 @@ model AuditEvent {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("audit_events")
+}
+
+// ============================================================
+// Phase 2 — Learning Architecture Advance
+// ============================================================
+
+/// Records each study session (a contiguous period of activity).
+/// Used to compute learning velocity, streaks, and heatmap calendars.
+model LearningSession {
+  id              String   @id
+  userId          String   @map("user_id")
+  startedAt       DateTime @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  durationSec     Int      @default(0) @map("duration_sec")
+  lessonsCompleted Int     @default(0) @map("lessons_completed")
+  assessmentsAnswered Int  @default(0) @map("assessments_answered")
+  xpEarned        Int      @default(0) @map("xp_earned")
+  simTradesPlaced Int      @default(0) @map("sim_trades_placed")
+  activityType    String   @default("study") @map("activity_type") // 'study' | 'simulation' | 'revision' | 'diagnostic'
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startedAt])
+  @@map("learning_sessions")
+}
+
+/// Append-only history of skill mastery state transitions.
+/// Powers the 3D retention curve and skill progression timeline.
+model SkillStateHistory {
+  id              String   @id
+  userId          String   @map("user_id")
+  skillId         String   @map("skill_id")
+  previousState   String   @map("previous_state")  // 'not_started' | 'learning' | 'developing' | 'practising' | 'demonstrated' | 'needs_revision'
+  newState        String   @map("new_state")
+  evidenceScoreDelta Int   @default(0) @map("evidence_score_delta")
+  triggerLessonId String? @map("trigger_lesson_id")
+  triggerActivity String  @default("assessment") @map("trigger_activity") // 'assessment' | 'diagnostic' | 'simulation' | 'revision'
+  recordedAt      DateTime @default(now()) @map("recorded_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([skillId])
+  @@index([recordedAt])
+  @@map("skill_state_history")
 }

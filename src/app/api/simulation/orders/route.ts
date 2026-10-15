@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db";
 import { getUser } from "@/lib/auth";
+import { evaluateAndAwardAchievements } from "@/lib/achievements";
 
 export async function GET() {
   try {
@@ -87,7 +88,39 @@ export async function POST(request: NextRequest) {
 
     await db.simOrder.create({ data: newOrder });
 
-    return NextResponse.json({ ok: true, order: newOrder });
+    // Record a learning session entry for simulator activity
+    await db.learningSession.create({
+      data: {
+        id: randomUUID(),
+        userId: user.id,
+        startedAt: new Date(),
+        endedAt: new Date(),
+        durationSec: 60,
+        simTradesPlaced: 1,
+        xpEarned: 25,
+        activityType: "simulation",
+      },
+    }).catch(() => {});
+
+    // Award XP for placing a trade
+    await db.user.update({
+      where: { id: user.id },
+      data: { experiencePoints: { increment: 25 }, lastActiveAt: new Date() },
+    }).catch(() => {});
+
+    // Evaluate achievements (trade-related: First Position, Active Trader, etc.)
+    const newlyAwarded = await evaluateAndAwardAchievements(user.id).catch(() => []);
+
+    return NextResponse.json({
+      ok: true,
+      order: newOrder,
+      newlyAwardedAchievements: newlyAwarded.map(a => ({
+        code: a.achievement.code,
+        name: a.achievement.name,
+        tier: a.achievement.tier,
+        xpReward: a.achievement.xpReward,
+      })),
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unable to place order.";
     return NextResponse.json({ error: msg }, { status: 500 });

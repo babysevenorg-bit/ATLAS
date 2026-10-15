@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { getUser } from "@/lib/auth";
 import { writeJson } from "@/db/schema";
+import { evaluateAndAwardAchievements } from "@/lib/achievements";
 
 // GET — return current user's onboarding profile
 export async function GET() {
@@ -82,7 +83,19 @@ export async function POST(request: NextRequest) {
       data: { experiencePoints: { increment: 25 } },
     });
 
-    return NextResponse.json({ ok: true, xpAwarded: 25 });
+    // Evaluate achievements (onboarding_complete trigger)
+    const newlyAwarded = await evaluateAndAwardAchievements(user.id).catch(() => []);
+
+    return NextResponse.json({
+      ok: true,
+      xpAwarded: 25,
+      newlyAwardedAchievements: newlyAwarded.map(a => ({
+        code: a.achievement.code,
+        name: a.achievement.name,
+        tier: a.achievement.tier,
+        xpReward: a.achievement.xpReward,
+      })),
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unable to save onboarding.";
     return NextResponse.json({ error: msg }, { status: 500 });

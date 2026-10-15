@@ -44,6 +44,8 @@ export type SessionUser = {
   persona: string;
   virtualBalance: number;
   experiencePoints: number;
+  learningStyle?: string;
+  onboardingCompleted?: boolean;
 };
 
 export async function getUser(): Promise<SessionUser | null> {
@@ -63,6 +65,8 @@ export async function getUser(): Promise<SessionUser | null> {
     persona: session.user.persona,
     virtualBalance: session.user.virtualBalance,
     experiencePoints: session.user.experiencePoints,
+    learningStyle: session.user.learningStyle,
+    onboardingCompleted: session.user.onboardingCompleted,
   };
 }
 

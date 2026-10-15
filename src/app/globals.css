@@ -3395,3 +3395,240 @@ a { text-decoration: none; color: inherit; }
   .onboarding-choice-grid { grid-template-columns: 1fr; }
   .heatmap-weekday-labels { display: none; }
 }
+
+/* ============================================================
+   PHASE 3 — Achievement Gallery + LLM Coach styles
+   ============================================================ */
+
+/* Achievements summary banner */
+.achievements-summary-banner {
+  display: grid;
+  grid-template-columns: repeat(3, auto) 1fr;
+  gap: 24px;
+  align-items: center;
+  background: #163832;
+  border-radius: 12px;
+  padding: 18px 22px;
+  color: white;
+}
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.summary-stat span {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #a9cfbe;
+  text-transform: uppercase;
+}
+.summary-stat strong {
+  font-family: 'Manrope', sans-serif;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+}
+.summary-stat small {
+  font-size: 10px;
+  color: #9bc2b0;
+}
+.summary-progress-track {
+  height: 6px;
+  background: #234b43;
+  border-radius: 3px;
+  overflow: hidden;
+  align-self: end;
+  margin-bottom: 8px;
+}
+.summary-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c9ed85, #5fbf6f);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* Filter pills */
+.achievement-filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.filter-pill {
+  background: white;
+  border: 1px solid #dde6db;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a6357;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.filter-pill:hover { border-color: #b3d9a8; }
+.filter-pill.active {
+  background: #1d4d3a;
+  color: white;
+  border-color: #1d4d3a;
+}
+
+/* Category block */
+.achievement-category-block { margin-bottom: 20px; }
+.category-block-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: #2a6a52;
+  margin: 0 0 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* Achievement grid */
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* Achievement card */
+.achievement-card {
+  background: white;
+  border: 2px solid #e3ebe0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.achievement-card.unlocked {
+  border-width: 2px;
+}
+.achievement-card.unlocked:hover {
+  transform: translateY(-2px);
+}
+.achievement-card.locked {
+  opacity: 0.78;
+  background: #fafdf8;
+}
+.achievement-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.achievement-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: #eef3ec;
+  color: #7c8b86;
+}
+.achievement-card.unlocked .achievement-icon {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.tier-badge {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.tier-badge.tier-bronze   { background: #fdebd0; color: #8a4a16; }
+.tier-badge.tier-silver   { background: #e9ecef; color: #5a6470; }
+.tier-badge.tier-gold     { background: #fff3bf; color: #8a6500; }
+.tier-badge.tier-platinum { background: #d8eef7; color: #1d4e6a; }
+
+.achievement-body strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: #223e31;
+  margin-bottom: 4px;
+}
+.achievement-body p {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #6b8174;
+  margin: 0;
+}
+.achievement-card.locked .achievement-body strong {
+  color: #7c8b86;
+}
+
+.achievement-unlock-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid #eef3ec;
+}
+.unlock-stamp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: #2f7a3d;
+  font-weight: 600;
+}
+.unlock-stamp svg { color: #5fbf6f; }
+.xp-reward {
+  background: #1d4d3a;
+  color: #c9ed85;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.achievement-progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #eef3ec;
+}
+.progress-bar-track {
+  height: 5px;
+  background: #eef3ec;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.progress-numbers {
+  font-size: 10px;
+  color: #6b8174;
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+
+/* Coach "LLM-powered" badge (shown in coach UI when LLM is active) */
+.coach-llm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(90deg, #5fb3d9, #1d4e6a);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .achievements-summary-banner {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .summary-progress-track { grid-column: span 3; }
+  .achievement-grid { grid-template-columns: 1fr 1fr; }
+}

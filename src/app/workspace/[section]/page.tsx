@@ -14,6 +14,7 @@ const allowed = [
   "monte-carlo",
   "skill-universe",
   "analytics",
+  "achievements",
   "onboarding",
   "binary-lab",
   "revision",

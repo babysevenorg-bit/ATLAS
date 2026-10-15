@@ -71,6 +71,7 @@ import MonteCarloEquity from "@/components/MonteCarloEquity";
 import SkillUniverse3D from "@/components/SkillUniverse3D";
 import LearningAnalyticsDashboard from "@/components/LearningAnalyticsDashboard";
 import AdaptiveOnboarding from "@/components/AdaptiveOnboarding";
+import AchievementsGallery from "@/components/AchievementsGallery";
 import DiagnosticModal from "@/components/DiagnosticModal";
 import PublicPortal from "@/components/PublicPortal";
 import LiveMarketTicker from "@/components/LiveMarketTicker";
@@ -104,6 +105,7 @@ const navItems = [
   { id: "monte-carlo", label: "Monte Carlo Lab", icon: Activity, badge: "NEW" },
   { id: "skill-universe", label: "3D Skill Universe", icon: Globe2, badge: "3D" },
   { id: "analytics", label: "Learning Analytics", icon: BarChart3, badge: "NEW" },
+  { id: "achievements", label: "Achievements", icon: Award, badge: "NEW" },
   { id: "binary-lab", label: "Binary Options Lab", icon: SplitSquareVertical },
   { id: "revision", label: "Daily Revision", icon: BrainCircuit, badge: "DUE" },
   { id: "coach", label: "AI Learning Coach", icon: Sparkles },
@@ -590,6 +592,7 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
               {section === "monte-carlo" && "Monte Carlo Equity Simulator"}
               {section === "skill-universe" && "3D Skill Universe"}
               {section === "analytics" && "Learning Analytics Dashboard"}
+              {section === "achievements" && "Achievement Gallery"}
               {section === "binary-lab" && "Binary Options Educational Lab"}
               {section === "revision" && "Daily Revision Queue"}
               {section === "coach" && "AI Learning Coach"}
@@ -972,6 +975,11 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
             <LearningAnalyticsDashboard
               user={user ? { id: user.id, experiencePoints, streakDays: user.persona ? 1 : 1, persona: user.persona } : null}
             />
+          )}
+
+          {/* 4e-bis. ACHIEVEMENT GALLERY */}
+          {section === "achievements" && (
+            <AchievementsGallery user={user ? { id: user.id } : null} />
           )}
 
           {/* 4f. ADAPTIVE ONBOARDING (if user hasn't completed it) */}

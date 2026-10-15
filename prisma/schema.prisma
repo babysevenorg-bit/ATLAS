@@ -40,6 +40,7 @@ model User {
   binarySims          BinarySim[]
   learningSessions    LearningSession[]
   skillStateHistory   SkillStateHistory[]
+  userAchievements    UserAchievement[]
 
   @@map("users")
 }
@@ -270,7 +271,7 @@ model SkillStateHistory {
   newState        String   @map("new_state")
   evidenceScoreDelta Int   @default(0) @map("evidence_score_delta")
   triggerLessonId String? @map("trigger_lesson_id")
-  triggerActivity String  @default("assessment") @map("trigger_activity") // 'assessment' | 'diagnostic' | 'simulation' | 'revision'
+  triggerActivity String  @default("assessment") @map("trigger_activity") // 'assessment' | 'diagnostic' | 'simulation' | 'revision' | 'decay'
   recordedAt      DateTime @default(now()) @map("recorded_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -279,4 +280,44 @@ model SkillStateHistory {
   @@index([skillId])
   @@index([recordedAt])
   @@map("skill_state_history")
+}
+
+// ============================================================
+// Phase 3 — Smart Gamification + LLM Coach
+// ============================================================
+
+/// Catalog of all achievements (badges) available in the platform.
+/// Seeded by the achievement engine on first run.
+model Achievement {
+  id           String  @id
+  code         String  @unique @map("code")
+  name         String
+  description  String
+  category     String  // 'learning' | 'discipline' | 'simulation' | 'streak' | 'mastery' | 'special'
+  iconKey      String  @default("award") @map("icon_key") // lucide icon name
+  tier         String  @default("bronze") // 'bronze' | 'silver' | 'gold' | 'platinum'
+  xpReward     Int     @default(50) @map("xp_reward")
+  // Trigger criteria stored as JSON: { type: 'lessons_completed'|'xp_threshold'|'streak_days'|'skills_demonstrated'|'sim_trades'|'process_score_avg'|'binary_sims'|'backtests_run', threshold: number }
+  criteria     String  @map("criteria") // JSON-serialised object
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+/// Per-user achievement unlocks. Append-only.
+model UserAchievement {
+  id              String   @id
+  userId          String   @map("user_id")
+  achievementId   String   @map("achievement_id")
+  unlockedAt      DateTime @default(now()) @map("unlocked_at")
+  contextData     String?  @map("context_data") // JSON: e.g. { value: 5, metric: 'lessons' } — what triggered it
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId], map: "user_achievement_unique")
+  @@index([userId])
+  @@map("user_achievements")
 }

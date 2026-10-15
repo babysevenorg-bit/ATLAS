@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { db } from "@/db";
 import { getUser } from "@/lib/auth";
+import { evaluateAndAwardAchievements } from "@/lib/achievements";
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,6 +93,14 @@ export async function POST(request: NextRequest) {
         Math.round(
           (stake / (stake + (stake * payoutPercent) / 100)) * 10000
         ) / 100,
+      newlyAwardedAchievements: user
+        ? (await evaluateAndAwardAchievements(user.id).catch(() => [])).map(a => ({
+            code: a.achievement.code,
+            name: a.achievement.name,
+            tier: a.achievement.tier,
+            xpReward: a.achievement.xpReward,
+          }))
+        : [],
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unable to simulate binary contract.";

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { db } from "@/db";
 import { getUser } from "@/lib/auth";
 import { getPublishedLessons, getUserProgress } from "@/lib/learning";
+import { evaluateAndAwardAchievements } from "@/lib/achievements";
 
 export async function POST(request: NextRequest) {
   try {
@@ -216,11 +217,20 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // After the transaction commits, evaluate achievements (non-blocking — failure here doesn't roll back).
+    const newlyAwarded = await safeEvaluateAchievements(user.id);
+
     return NextResponse.json({
       correct,
       explanation: lesson.explanation,
       completed: current?.completed || correct,
       xpGained: correct ? 50 : 0,
+      newlyAwardedAchievements: newlyAwarded.map(a => ({
+        code: a.achievement.code,
+        name: a.achievement.name,
+        tier: a.achievement.tier,
+        xpReward: a.achievement.xpReward,
+      })),
     });
   } catch {
     return NextResponse.json(
@@ -229,3 +239,14 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Helper: evaluate achievements after a successful assessment.
+// Called outside the main try/catch so a failure here doesn't roll back the assessment.
+async function safeEvaluateAchievements(userId: string) {
+  try {
+    return await evaluateAndAwardAchievements(userId);
+  } catch {
+    return [];
+  }
+}
+void safeEvaluateAchievements;

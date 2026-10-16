@@ -3632,3 +3632,564 @@ a { text-decoration: none; color: inherit; }
   .summary-progress-track { grid-column: span 3; }
   .achievement-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   PHASE 4 — Guided Welcome + Next Steps Panel (onboarding UX)
+   ============================================================ */
+
+/* GUIDED WELCOME OVERLAY */
+.guided-welcome-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 42, 32, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.guided-welcome-card {
+  background: white;
+  border-radius: 20px;
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.guided-skip-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f5f9f3;
+  border: 1px solid #e3ebe0;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #6b8174;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+.guided-skip-btn:hover { background: #eef3ec; color: #2a4535; }
+
+.guided-progress-header {
+  background: #163832;
+  padding: 20px 24px 16px;
+  border-radius: 20px 20px 0 0;
+}
+.guided-progress-bar {
+  height: 4px;
+  background: #234b43;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.guided-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c9ed85, #5fbf6f);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+.guided-step-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.guided-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #c9ed85;
+  text-transform: uppercase;
+}
+.guided-progress-label {
+  font-size: 11px;
+  color: #9bc2b0;
+  font-weight: 600;
+}
+
+.guided-step-content {
+  padding: 36px 32px 24px;
+  text-align: center;
+}
+.guided-step-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #c9ed85, #5fbf6f);
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+  color: #163832;
+  box-shadow: 0 8px 24px rgba(95, 191, 111, 0.3);
+}
+.guided-step-body h1,
+.guided-step-body h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 26px;
+  color: #163832;
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+}
+.guided-step-lead {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a6357;
+  margin: 0 auto 24px;
+  max-width: 520px;
+}
+.guided-step-lead strong { color: #163832; }
+
+/* Promise row (step 1) */
+.guided-promise-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+  text-align: left;
+}
+.guided-promise {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #f7faf5;
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid #e3ebe0;
+}
+.guided-promise > svg { color: #2a6a52; flex-shrink: 0; margin-top: 2px; }
+.guided-promise strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  color: #163832;
+  margin-bottom: 2px;
+}
+.guided-promise p {
+  font-size: 11px;
+  color: #6b8174;
+  margin: 0;
+  line-height: 1.4;
+}
+.guided-tour-note {
+  font-size: 12px;
+  color: #7c8b86;
+  margin: 20px 0 0;
+  line-height: 1.5;
+}
+
+/* Curriculum grid (step 2) */
+.guided-curriculum-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+  text-align: left;
+}
+.guided-curriculum-tile {
+  background: #f7faf5;
+  border: 1px solid #e3ebe0;
+  border-radius: 10px;
+  padding: 12px;
+  position: relative;
+}
+.guided-curriculum-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #5fbf6f;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.guided-curriculum-tile strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: #163832;
+  margin: 4px 0;
+}
+.guided-curriculum-tile p {
+  font-size: 11px;
+  color: #6b8174;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Path timeline (step 3) */
+.guided-path-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 20px 0;
+  text-align: left;
+}
+.guided-path-stop {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+.guided-path-marker {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #eef3ec;
+  color: #7c8b86;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+  border: 2px solid #dde6db;
+}
+.guided-path-marker.done {
+  background: #5fbf6f;
+  color: white;
+  border-color: #5fbf6f;
+}
+.guided-path-connector {
+  width: 2px;
+  height: 16px;
+  background: #dde6db;
+  margin-left: 15px;
+}
+.guided-path-content {
+  flex: 1;
+  padding-top: 2px;
+}
+.guided-path-step-num {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #5fbf6f;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.guided-path-content strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: #163832;
+  margin-bottom: 2px;
+}
+.guided-path-content p {
+  font-size: 12px;
+  color: #6b8174;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Nav guide (step 4) */
+.guided-nav-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 20px 0;
+  text-align: left;
+}
+.guided-nav-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #f7faf5;
+  border: 1px solid #e3ebe0;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.guided-nav-item > svg { color: #2a6a52; flex-shrink: 0; }
+.guided-nav-item strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: #163832;
+}
+.guided-nav-item p {
+  font-size: 11px;
+  color: #6b8174;
+  margin: 1px 0 0;
+}
+.guided-final-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(90deg, #1d4d3a, #2a6a52);
+  color: white;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+/* Navigation buttons */
+.guided-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 32px 28px;
+  border-top: 1px solid #eef3ec;
+}
+.guided-back-btn,
+.guided-next-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.guided-back-btn {
+  background: transparent;
+  color: #6b8174;
+  border: 1px solid #dde6db;
+}
+.guided-back-btn:hover:not(:disabled) { background: #f5f9f3; color: #2a4535; }
+.guided-back-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.guided-next-btn {
+  background: #1d4d3a;
+  color: white;
+  border: 0;
+}
+.guided-next-btn:hover { background: #2a6a52; }
+
+/* ============================================================
+   NEXT STEPS PANEL (on dashboard for new users)
+   ============================================================ */
+.next-steps-panel {
+  background: linear-gradient(135deg, #163832 0%, #0e2a20 100%);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 20px;
+  color: white;
+  border: 1px solid #2a4a42;
+}
+.next-steps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 16px;
+}
+.next-steps-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #c9ed85;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.next-steps-header h3 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 20px;
+  margin: 0 0 4px;
+  color: white;
+  letter-spacing: -0.3px;
+}
+.next-steps-header p {
+  font-size: 12px;
+  color: #9bc2b0;
+  margin: 0;
+  line-height: 1.5;
+}
+.next-steps-progress-ring {
+  flex-shrink: 0;
+}
+
+.next-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.next-step-row {
+  display: grid;
+  grid-template-columns: 32px 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #2a4a42;
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: all 0.2s ease;
+}
+.next-step-row.current {
+  border-color: #5fbf6f;
+  background: rgba(95, 191, 111, 0.08);
+  box-shadow: 0 0 0 1px rgba(95, 191, 111, 0.3);
+}
+.next-step-row.done {
+  opacity: 0.6;
+}
+.next-step-marker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: #234b43;
+  color: #9bc2b0;
+  border: 1px solid #2a544c;
+}
+.next-step-marker.done {
+  background: #5fbf6f;
+  color: white;
+  border-color: #5fbf6f;
+}
+.next-step-marker.current {
+  background: #c9ed85;
+  color: #163832;
+  border-color: #c9ed85;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201, 237, 133, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(201, 237, 133, 0); }
+}
+.next-step-icon {
+  width: 36px;
+  height: 36px;
+  background: #234b43;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #c9ed85;
+}
+.next-step-body {
+  min-width: 0;
+}
+.next-step-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.next-step-title-row strong {
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: white;
+}
+.next-step-duration {
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  color: #9bc2b0;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #1e453e;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.next-step-body p {
+  font-size: 11px;
+  color: #9bc2b0;
+  margin: 0;
+  line-height: 1.4;
+}
+.next-step-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #234b43;
+  color: #d1ebd8;
+  border: 1px solid #2a544c;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.next-step-cta:hover { background: #2a544c; }
+.next-step-cta.primary {
+  background: #c9ed85;
+  color: #163832;
+  border-color: #c9ed85;
+}
+.next-step-cta.primary:hover { background: #b3d9a8; }
+.next-step-cta.done {
+  background: transparent;
+  color: #5fbf6f;
+  border-color: #2a544c;
+  cursor: default;
+}
+
+/* Quick shortcuts */
+.next-steps-shortcuts {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #2a4a42;
+}
+.shortcuts-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #9bc2b0;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.shortcuts-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.shortcut-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #2a544c;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #d1ebd8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.shortcut-chip:hover {
+  background: #234b43;
+  border-color: #5fbf6f;
+  color: #c9ed85;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .guided-welcome-card { max-width: 100%; border-radius: 16px; }
+  .guided-step-content { padding: 28px 20px 20px; }
+  .guided-step-body h1, .guided-step-body h2 { font-size: 22px; }
+  .guided-promise-row { grid-template-columns: 1fr; }
+  .guided-curriculum-grid { grid-template-columns: 1fr; }
+  .guided-nav-buttons { padding: 14px 20px 24px; }
+  .next-step-row {
+    grid-template-columns: 28px 32px 1fr;
+    gap: 8px;
+  }
+  .next-step-cta {
+    grid-column: span 3;
+    justify-content: center;
+  }
+  .next-steps-header { flex-direction: column; }
+  .next-steps-progress-ring { align-self: flex-start; }
+}

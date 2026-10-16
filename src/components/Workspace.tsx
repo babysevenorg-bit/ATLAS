@@ -72,6 +72,8 @@ import SkillUniverse3D from "@/components/SkillUniverse3D";
 import LearningAnalyticsDashboard from "@/components/LearningAnalyticsDashboard";
 import AdaptiveOnboarding from "@/components/AdaptiveOnboarding";
 import AchievementsGallery from "@/components/AchievementsGallery";
+import GuidedWelcome from "@/components/GuidedWelcome";
+import NextStepsPanel from "@/components/NextStepsPanel";
 import DiagnosticModal from "@/components/DiagnosticModal";
 import PublicPortal from "@/components/PublicPortal";
 import LiveMarketTicker from "@/components/LiveMarketTicker";
@@ -132,6 +134,7 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [toastNotice, setToastNotice] = useState("");
+  const [guidedWelcomeSeen, setGuidedWelcomeSeen] = useState(false);
   const [isPublicLanding, setIsPublicLanding] = useState(false);
 
   // Persona State
@@ -677,6 +680,18 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
           {/* 1. OVERVIEW & NETFLIX-STYLE MASTERCLASSES DASHBOARD */}
           {section === "dashboard" && (
             <div className="netflix-dashboard-container">
+              {/* NEXT STEPS PANEL — shown for logged-in users who haven't completed onboarding/diagnostic/first lesson */}
+              {user && completedCount === 0 && (
+                <NextStepsPanel
+                  hasCompletedOnboarding={!!user.onboardingCompleted}
+                  hasTakenDiagnostic={false}
+                  completedLessonsCount={completedCount}
+                  onTakeDiagnostic={() => setDiagnosticOpen(true)}
+                  onCompleteOnboarding={() => navigateTo("onboarding")}
+                  onStartFirstLesson={() => openLesson(featuredClass.firstLessonId)}
+                  onVisitRiskLab={() => navigateTo("risk-lab")}
+                />
+              )}
               {/* IMMERSIVE NETFLIX FEATURED HERO BANNER */}
               <div className="netflix-hero-spotlight">
                 <div className="spotlight-backdrop-vignette" />
@@ -1596,6 +1611,19 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
             </div>
           </div>
         </div>
+      )}
+
+      {/* GUIDED WELCOME — shown once for first-time users who haven't completed any lessons */}
+      {user && completedCount === 0 && !guidedWelcomeSeen && !authOpen && !diagnosticOpen && section === "dashboard" && (
+        <GuidedWelcome
+          userName={user.name}
+          onComplete={() => {
+            setGuidedWelcomeSeen(true);
+            // Auto-open diagnostic after the tour — it's the logical first action
+            setDiagnosticOpen(true);
+          }}
+          onSkip={() => setGuidedWelcomeSeen(true)}
+        />
       )}
     </div>
   );

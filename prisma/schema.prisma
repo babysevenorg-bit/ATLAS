@@ -44,6 +44,8 @@ model User {
   skillStateHistory   SkillStateHistory[]
   userAchievements    UserAchievement[]
   journalEntries      JournalEntry[]
+  forumPosts          ForumPost[]
+  forumComments       ForumComment[]
 
   @@map("users")
 }
@@ -284,6 +286,52 @@ model SkillStateHistory {
   @@index([skillId])
   @@index([recordedAt])
   @@map("skill_state_history")
+}
+
+// ============================================================
+// Phase 5 — Community & Peer Learning (FR-080)
+// ============================================================
+
+/// Community forum posts. Supports categories, tags, upvotes, and moderation flags.
+/// Hidden automatically when flaggedCount > 3 (community-driven moderation).
+model ForumPost {
+  id           String   @id
+  userId       String   @map("user_id")
+  title        String
+  body         String
+  category     String   @default("general") // 'general' | 'forex-foundations' | 'technical-analysis' | 'risk-management' | 'trading-psychology' | 'binary-options' | 'strategies' | 'qna'
+  tags         String   @default("[]") @map("tags")          // JSON array of strings
+  upvoteIds    String   @default("[]") @map("upvote_ids")    // JSON array of user IDs who upvoted
+  pinned       Boolean  @default(false)
+  flaggedCount Int      @default(0) @map("flagged_count")
+  commentCount Int      @default(0) @map("comment_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments ForumComment[]
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("forum_posts")
+}
+
+/// Comments on forum posts. Supports upvotes. Cascade-deleted with parent post.
+model ForumComment {
+  id        String   @id
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  body      String
+  upvoteIds String   @default("[]") @map("upvote_ids") // JSON array of user IDs
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+  @@map("forum_comments")
 }
 
 // ============================================================

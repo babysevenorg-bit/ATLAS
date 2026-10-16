@@ -23,6 +23,8 @@ const allowed = [
   "studio",
   "profile",
   "journal",
+  "community",
+  "calendar",
   "legal"
 ];
 

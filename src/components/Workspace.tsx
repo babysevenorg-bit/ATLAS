@@ -59,7 +59,9 @@ import {
   Globe2,
   Rocket,
   Notebook,
-  Scale
+  Scale,
+  Calendar,
+  MessageCircle
 } from "lucide-react";
 
 import type { Lesson, LearningPathMeta, Skill, Masterclass } from "@/lib/curriculum";
@@ -85,6 +87,8 @@ import ClassDetailModal from "@/components/ClassDetailModal";
 import InteractiveLessonPlayer from "@/components/InteractiveLessonPlayer";
 import TradingJournal from "@/components/TradingJournal";
 import LegalHub from "@/components/LegalHub";
+import CommunityHub from "@/components/CommunityHub";
+import EconomicCalendar from "@/components/EconomicCalendar";
 
 type User = {
   id: string;
@@ -118,6 +122,8 @@ const navItems = [
   { id: "coach", label: "AI Learning Coach", icon: Sparkles },
   { id: "progress", label: "Skills & Analytics", icon: TrendingUp },
   { id: "journal", label: "Trading Journal", icon: Notebook, badge: "NEW" },
+  { id: "community", label: "Community", icon: MessageCircle, badge: "NEW" },
+  { id: "calendar", label: "Economic Calendar", icon: Calendar, badge: "NEW" },
   { id: "legal", label: "Legal & Compliance", icon: Scale },
 ];
 
@@ -642,6 +648,8 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
               {section === "dashboard" && "Adaptive Overview & Classes"}
               {section === "profile" && "Account & Settings"}
               {section === "journal" && "Trading Journal & Reflections"}
+              {section === "community" && "Community & Peer Learning"}
+              {section === "calendar" && "Economic Calendar & Market Events"}
               {section === "legal" && "Legal & Compliance"}
             </strong>
           </div>
@@ -1473,6 +1481,14 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
           {section === "journal" && (
             <TradingJournal user={user ? { id: user.id } : null} />
           )}
+
+          {/* 9b2. COMMUNITY & PEER LEARNING (FR-080) */}
+          {section === "community" && (
+            <CommunityHub user={user ? { id: user.id, name: user.name, email: user.email, role: user.role, persona: user.persona, virtualBalance: user.virtualBalance, experiencePoints: user.experiencePoints } : null} />
+          )}
+
+          {/* 9b2. ECONOMIC CALENDAR */}
+          {section === "calendar" && <EconomicCalendar />}
 
           {/* 9c. LEGAL & COMPLIANCE HUB */}
           {section === "legal" && <LegalHub />}

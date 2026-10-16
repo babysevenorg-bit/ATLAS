@@ -58,7 +58,7 @@ function fibonacciSphere(n: number): { x: number; y: number; z: number }[] {
 }
 
 const MASTERY_COLORS: Record<SkillMasteryState, string> = {
-  not_started: "#7c8b86",
+  not_started: "#a7bdb4",
   learning: "#74c0fc",
   developing: "#ffd43b",
   practising: "#ff922b",
@@ -272,7 +272,12 @@ export default function SkillUniverse3D({
           onMouseLeave={onMouseUp}
           style={{ cursor: dragging ? "grabbing" : "grab" }}
         >
-          <div className="universe-stage" style={{ transform: `translate(-50%, -50%)` }}>
+          {/* NOTE: centring is done by .universe-stage in globals.css
+              (top/left 50% + negative margins). Adding a translate(-50%,-50%)
+              here as well shifted the whole sphere 300px up and left, which
+              pushed most skill nodes outside .universe-canvas where
+              overflow:hidden clipped them. */}
+          <div className="universe-stage">
             <svg
               width="100%"
               height="100%"
@@ -328,9 +333,11 @@ export default function SkillUniverse3D({
                 .map(node => {
                   const p = project(node.x, node.y, node.z);
                   const isSelected = selectedSkillId === node.id;
-                  const baseRadius = 6 + (node.evidenceScore / 100) * 10;
-                  const radius = baseRadius * (0.5 + p.depth * 0.8);
-                  const glowOpacity = 0.3 + p.depth * 0.7;
+                  const baseRadius = 9 + (node.evidenceScore / 100) * 11;
+                  const radius = baseRadius * (0.72 + p.depth * 0.5);
+                  // Floor raised from 0.3: with depth in [0.08, 1.08] the old
+                  // curve left most of the sphere below 35% and the canvas looked empty.
+                  const glowOpacity = 0.62 + p.depth * 0.38;
                   const color = MASTERY_COLORS[node.masteryState];
                   return (
                     <g
@@ -346,7 +353,7 @@ export default function SkillUniverse3D({
                       <circle
                         r={radius * 2.5}
                         fill={color}
-                        opacity={isSelected ? 0.4 : glowOpacity * 0.2}
+                        opacity={isSelected ? 0.45 : glowOpacity * 0.32}
                       />
                       {/* Main node */}
                       <circle
@@ -361,15 +368,18 @@ export default function SkillUniverse3D({
                         <circle r={radius * 0.4} fill="#fff" opacity={glowOpacity} />
                       )}
                       {/* Label (only for front-most nodes or selected) */}
-                      {(p.depth > 0.6 || isSelected) && (
+                      {(p.depth > 0.42 || isSelected) && (
                         <text
-                          y={radius + 12}
+                          y={radius + 14}
                           textAnchor="middle"
-                          fontSize="9"
+                          fontSize="11"
                           fontFamily="Manrope, sans-serif"
-                          fontWeight={isSelected ? 700 : 500}
-                          fill={isSelected ? "#163832" : "#4a6357"}
-                          opacity={isSelected ? 1 : p.depth}
+                          fontWeight={700}
+                          /* Light ink: this canvas is a #1a3a32 -> #0e1f1c gradient,
+                             so the previous #4a6357 labels were dark-on-dark and
+                             never legible. */
+                          fill={isSelected ? "#c9ed85" : "#cfe3d7"}
+                          opacity={isSelected ? 1 : Math.min(1, 0.55 + p.depth * 0.45)}
                           style={{ pointerEvents: "none" }}
                         >
                           {node.code}

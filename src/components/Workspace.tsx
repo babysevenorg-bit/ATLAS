@@ -74,6 +74,7 @@ import AdaptiveOnboarding from "@/components/AdaptiveOnboarding";
 import AchievementsGallery from "@/components/AchievementsGallery";
 import GuidedWelcome from "@/components/GuidedWelcome";
 import NextStepsPanel from "@/components/NextStepsPanel";
+import LearningPathRoadmap from "@/components/LearningPathRoadmap";
 import DiagnosticModal from "@/components/DiagnosticModal";
 import PublicPortal from "@/components/PublicPortal";
 import LiveMarketTicker from "@/components/LiveMarketTicker";
@@ -135,6 +136,14 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
   const [search, setSearch] = useState("");
   const [toastNotice, setToastNotice] = useState("");
   const [guidedWelcomeSeen, setGuidedWelcomeSeen] = useState(false);
+
+  // Check localStorage on mount — show guided welcome for first-time visitors (guests included)
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem("atlas_guided_welcome_seen");
+      if (seen) setGuidedWelcomeSeen(true);
+    } catch {}
+  }, []);
   const [isPublicLanding, setIsPublicLanding] = useState(false);
 
   // Persona State
@@ -692,6 +701,14 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
                   onVisitRiskLab={() => navigateTo("risk-lab")}
                 />
               )}
+
+              {/* LEARNING PATH ROADMAP — visible for ALL users (guests included) */}
+              <LearningPathRoadmap
+                lessons={lessons}
+                completedLessonIds={completed}
+                onOpenLesson={openLesson}
+                isAuthenticated={!!user}
+              />
               {/* IMMERSIVE NETFLIX FEATURED HERO BANNER */}
               <div className="netflix-hero-spotlight">
                 <div className="spotlight-backdrop-vignette" />
@@ -1613,16 +1630,20 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
         </div>
       )}
 
-      {/* GUIDED WELCOME — shown once for first-time users who haven't completed any lessons */}
-      {user && completedCount === 0 && !guidedWelcomeSeen && !authOpen && !diagnosticOpen && section === "dashboard" && (
+      {/* GUIDED WELCOME — shown once for ALL first-time visitors (guests included) */}
+      {!guidedWelcomeSeen && !authOpen && !diagnosticOpen && section === "dashboard" && (
         <GuidedWelcome
-          userName={user.name}
+          userName={user?.name}
           onComplete={() => {
             setGuidedWelcomeSeen(true);
-            // Auto-open diagnostic after the tour — it's the logical first action
-            setDiagnosticOpen(true);
+            try { localStorage.setItem("atlas_guided_welcome_seen", "1"); } catch {}
+            // If logged in, auto-open diagnostic; if guest, let them explore
+            if (user) setDiagnosticOpen(true);
           }}
-          onSkip={() => setGuidedWelcomeSeen(true)}
+          onSkip={() => {
+            setGuidedWelcomeSeen(true);
+            try { localStorage.setItem("atlas_guided_welcome_seen", "1"); } catch {}
+          }}
         />
       )}
     </div>

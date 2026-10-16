@@ -43,6 +43,7 @@ model User {
   learningSessions    LearningSession[]
   skillStateHistory   SkillStateHistory[]
   userAchievements    UserAchievement[]
+  journalEntries      JournalEntry[]
 
   @@map("users")
 }
@@ -198,7 +199,8 @@ model SimOrder {
   processScore    Int?      @default(100) @map("process_score")
   createdAt       DateTime  @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  journalEntries JournalEntry[]
 
   @@index([userId])
   @@map("sim_orders")
@@ -322,4 +324,33 @@ model UserAchievement {
   @@unique([userId, achievementId], map: "user_achievement_unique")
   @@index([userId])
   @@map("user_achievements")
+}
+
+// ============================================================
+// Phase 4 — Trading Journal & Compliance
+// ============================================================
+
+/// Per-user reflective journal entries linked (optionally) to simulated trades.
+/// Powers the /workspace/journal experience: calendar heatmap, mood tracking,
+/// emotion analytics, and post-trade postmortems.
+model JournalEntry {
+  id             String   @id
+  userId         String   @map("user_id")
+  simOrderId     String?  @map("sim_order_id") // optional link to SimOrder
+  title          String
+  body           String   @default("")          // markdown / plain text reflection
+  tags           String   @default("[]") @map("tags")         // JSON-serialised string[]
+  emotions       String   @default("[]") @map("emotions")    // JSON-serialised string[] ('calm','anxious','greedy','fomo','confident','frustrated','patient','disciplined')
+  screenshotUrl  String?  @map("screenshot_url")  // optional image URL (e.g. chart screenshot)
+  moodRating     Int      @default(3) @map("mood_rating") // 1 (poor) - 5 (great)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  simOrder  SimOrder? @relation(fields: [simOrderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([simOrderId])
+  @@index([createdAt])
+  @@map("journal_entries")
 }

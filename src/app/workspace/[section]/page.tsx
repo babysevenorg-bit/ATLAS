@@ -21,7 +21,9 @@ const allowed = [
   "coach",
   "progress",
   "studio",
-  "profile"
+  "profile",
+  "journal",
+  "legal"
 ];
 
 export default async function WorkspacePage({ params }: { params: Promise<{ section: string }> }) {

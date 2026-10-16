@@ -57,7 +57,9 @@ import {
   Activity,
   Gauge,
   Globe2,
-  Rocket
+  Rocket,
+  Notebook,
+  Scale
 } from "lucide-react";
 
 import type { Lesson, LearningPathMeta, Skill, Masterclass } from "@/lib/curriculum";
@@ -81,6 +83,8 @@ import LiveMarketTicker from "@/components/LiveMarketTicker";
 import NetflixCard from "@/components/NetflixCard";
 import ClassDetailModal from "@/components/ClassDetailModal";
 import InteractiveLessonPlayer from "@/components/InteractiveLessonPlayer";
+import TradingJournal from "@/components/TradingJournal";
+import LegalHub from "@/components/LegalHub";
 
 type User = {
   id: string;
@@ -113,6 +117,8 @@ const navItems = [
   { id: "revision", label: "Daily Revision", icon: BrainCircuit, badge: "DUE" },
   { id: "coach", label: "AI Learning Coach", icon: Sparkles },
   { id: "progress", label: "Skills & Analytics", icon: TrendingUp },
+  { id: "journal", label: "Trading Journal", icon: Notebook, badge: "NEW" },
+  { id: "legal", label: "Legal & Compliance", icon: Scale },
 ];
 
 export default function Workspace({ initialSection, lessons, initialCompleted, user }: Props) {
@@ -635,6 +641,8 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
               {section === "academy" && (activeLessonId ? "Interactive Masterclass Episode" : "Masterclass Catalog")}
               {section === "dashboard" && "Adaptive Overview & Classes"}
               {section === "profile" && "Account & Settings"}
+              {section === "journal" && "Trading Journal & Reflections"}
+              {section === "legal" && "Legal & Compliance"}
             </strong>
           </div>
 
@@ -1460,6 +1468,14 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
               </div>
             )
           )}
+
+          {/* 9b. TRADING JOURNAL */}
+          {section === "journal" && (
+            <TradingJournal user={user ? { id: user.id } : null} />
+          )}
+
+          {/* 9c. LEGAL & COMPLIANCE HUB */}
+          {section === "legal" && <LegalHub />}
 
           {/* 10. PROFILE & SETTINGS */}
           {section === "profile" && (

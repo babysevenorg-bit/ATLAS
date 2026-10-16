@@ -122,19 +122,29 @@ vercel link
 vercel --prod
 ```
 
-### Step 4 — Run the database migration
+### Step 4 — Run the database migration + seed
 
-After the first deploy, push the schema to your Postgres database:
+After the first deploy, push the schema AND seed the curriculum content:
 
 ```bash
-# Set DIRECT_URL in your local .env to the production database, then:
+# Set both DATABASE_URL and DIRECT_URL in your local .env to point at your production DB, then:
 bun run db:push
+bun run db:seed
 ```
+
+The seed script populates the database with:
+- 9 skills (SKILLS_TAXONOMY)
+- 19 foundation lessons (foundationLessons)
+- 10 diagnostic questions
+- 24 achievements
+
+After seeding, ALL curriculum content is editable through the Knowledge Studio admin UI — no code changes or redeployment needed to add or edit lessons.
 
 Or use Vercel CLI:
 ```bash
 vercel env pull .env.production.local
 bun run db:push
+bun run db:seed
 ```
 
 ### Vercel-specific configuration in this repo

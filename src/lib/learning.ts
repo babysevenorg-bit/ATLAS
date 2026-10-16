@@ -2,7 +2,7 @@ import { db } from "@/db";
 import { readJson } from "@/db/schema";
 import { foundationLessons, type Lesson } from "@/lib/curriculum";
 
-type DbLesson = {
+type DbLessonRow = {
   id: string;
   slug: string;
   title: string;
@@ -25,7 +25,7 @@ type DbLesson = {
   version: number;
 };
 
-function mapLesson(item: DbLesson): Lesson {
+function mapLesson(item: DbLessonRow): Lesson {
   return {
     id: item.id,
     slug: item.slug || item.id,
@@ -50,36 +50,34 @@ function mapLesson(item: DbLesson): Lesson {
   };
 }
 
+// Returns ALL published lessons from the database.
+// If the database is empty (first deploy before seeding), falls back to hardcoded
+// foundationLessons so the app still renders. Run `bun run db:seed` to populate the DB.
 export async function getPublishedLessons(): Promise<Lesson[]> {
   try {
-    const additions = await db.lesson.findMany({
+    const rows = await db.lesson.findMany({
       where: { status: "published" },
+      orderBy: { sortOrder: "asc" },
     });
-    const mapped = additions.map((item) =>
+    if (rows.length === 0) {
+      // Database not seeded yet — use hardcoded fallback
+      return foundationLessons.sort((a, b) => a.order - b.order);
+    }
+    return rows.map((row) =>
       mapLesson({
-        ...item,
-        sortOrder: item.sortOrder,
-      } as DbLesson)
+        ...row,
+        sortOrder: row.sortOrder,
+      } as DbLessonRow)
     );
-    return [...foundationLessons, ...mapped].sort((a, b) => a.order - b.order);
   } catch {
-    return foundationLessons;
+    // Database not connected — use hardcoded fallback
+    return foundationLessons.sort((a, b) => a.order - b.order);
   }
 }
 
 export async function getUserProgress(userId: string) {
   try {
-    const rows = await db.progress.findMany({ where: { userId } });
-    return rows.map((row) => ({
-      id: row.id,
-      userId: row.userId,
-      lessonId: row.lessonId,
-      completed: row.completed,
-      score: row.score,
-      attempts: row.attempts,
-      timeSpentSec: row.timeSpentSec,
-      updatedAt: row.updatedAt,
-    }));
+    return await db.progress.findMany({ where: { userId } });
   } catch {
     return [];
   }
@@ -125,4 +123,20 @@ export async function getUserBinarySims(userId: string) {
   } catch {
     return [];
   }
+}
+
+// Fetches diagnostic questions from the database (stored in AuditEvent as a settings row).
+// Falls back to the hardcoded DIAGNOSTIC_QUESTIONS if not seeded.
+export async function getDiagnosticQuestions() {
+  try {
+    const settings = await db.auditEvent.findUnique({
+      where: { id: "atlas-diagnostic-questions" },
+    });
+    if (settings?.details) {
+      return readJson(settings.details, []);
+    }
+  } catch {}
+  // Fallback to hardcoded import
+  const { DIAGNOSTIC_QUESTIONS } = await import("@/lib/curriculum");
+  return DIAGNOSTIC_QUESTIONS;
 }

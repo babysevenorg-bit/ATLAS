@@ -1637,8 +1637,14 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
           onComplete={() => {
             setGuidedWelcomeSeen(true);
             try { localStorage.setItem("atlas_guided_welcome_seen", "1"); } catch {}
-            // If logged in, auto-open diagnostic; if guest, let them explore
-            if (user) setDiagnosticOpen(true);
+            // Only auto-open diagnostic for authenticated users — guests can't submit it
+            if (user) {
+              setDiagnosticOpen(true);
+            } else {
+              // For guests, prompt to register so they can save progress
+              setAuthOpen(true);
+              setAuthMode("register");
+            }
           }}
           onSkip={() => {
             setGuidedWelcomeSeen(true);

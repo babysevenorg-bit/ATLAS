@@ -47,8 +47,8 @@ export default function GuidedWelcome({ onComplete, onSkip, userName }: Props) {
   }
 
   return (
-    <div className="guided-welcome-overlay">
-      <div className="guided-welcome-card">
+    <div className="guided-welcome-overlay" onClick={onSkip}>
+      <div className="guided-welcome-card" onClick={e => e.stopPropagation()}>
         {/* Skip button */}
         <button className="guided-skip-btn" onClick={onSkip} title="Skip tour">
           <X size={16} />

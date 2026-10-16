@@ -3,13 +3,16 @@ import { randomUUID } from "node:crypto";
 import { db } from "@/db";
 import { writeJson } from "@/db/schema";
 import { getUser } from "@/lib/auth";
-import { DIAGNOSTIC_QUESTIONS } from "@/lib/curriculum";
+import { getDiagnosticQuestions } from "@/lib/learning";
 
 export async function POST(request: NextRequest) {
   try {
     const user = await getUser();
     const body = await request.json();
     const answers: number[] = body.answers;
+
+    // Fetch diagnostic questions from DB (falls back to hardcoded if not seeded)
+    const DIAGNOSTIC_QUESTIONS = await getDiagnosticQuestions();
 
     if (!Array.isArray(answers) || answers.length !== DIAGNOSTIC_QUESTIONS.length) {
       return NextResponse.json(

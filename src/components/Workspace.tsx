@@ -255,31 +255,53 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
   }
 
   // Handle Assessment Completion from Player
+  // Returns true if the answer was correct (regardless of whether the API saved it).
+  // This way the user can always progress even if the server is down.
   async function handleLessonAssessment(lessonId: string, answerIdx: number): Promise<boolean> {
     const lesson = lessons.find(l => l.id === lessonId);
     if (!lesson) return false;
 
+    // Check correctness locally first — this is the source of truth for progression
+    const isLocallyCorrect = answerIdx === lesson.answer;
+
     if (user) {
+      // Authenticated: try to save to the server
       try {
         const res = await fetch("/api/assessments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ lessonId, answer: answerIdx }),
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+
         if (res.ok && data.correct) {
+          // Server confirmed correct — update local state
           setCompleted(prev => [...new Set([...prev, lessonId])]);
           if (data.xpGained) setExperiencePoints(xp => xp + data.xpGained);
           return true;
+        } else if (res.ok && !data.correct) {
+          // Server says wrong answer — don't update completion
+          return false;
+        } else {
+          // API returned an error (500, 401, etc.) — use local correctness
+          // so the user can still progress
+          if (isLocallyCorrect) {
+            setCompleted(prev => [...new Set([...prev, lessonId])]);
+            setExperiencePoints(xp => xp + 50);
+          }
+          return isLocallyCorrect;
         }
-        return false;
       } catch {
-        return false;
+        // Network error — use local correctness
+        if (isLocallyCorrect) {
+          setCompleted(prev => [...new Set([...prev, lessonId])]);
+          setExperiencePoints(xp => xp + 50);
+        }
+        return isLocallyCorrect;
       }
     } else {
-      // Guest local execution
-      const isCorrect = answerIdx === lesson.answer;
-      if (isCorrect) {
+      // Guest: local-only execution
+      if (isLocallyCorrect) {
         const updated = [...new Set([...completed, lessonId])];
         setCompleted(updated);
         setExperiencePoints(xp => xp + 50);
@@ -287,7 +309,7 @@ export default function Workspace({ initialSection, lessons, initialCompleted, u
           localStorage.setItem("atlas_demo_completed", JSON.stringify(updated));
         } catch {}
       }
-      return isCorrect;
+      return isLocallyCorrect;
     }
   }
 

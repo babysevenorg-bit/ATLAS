@@ -12,7 +12,9 @@ import {
   Award,
   Layers,
   HelpCircle,
-  X
+  X,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { DIAGNOSTIC_QUESTIONS } from "@/lib/curriculum";
 
@@ -22,25 +24,30 @@ type Props = {
   onCompleted: (assignedLevel: string, categoryScores: Record<string, number>) => void;
 };
 
+type Results = {
+  score: number;
+  total: number;
+  percent: number;
+  assignedLevel: string;
+  categoryScores: Record<string, number>;
+};
+
 export default function DiagnosticModal({ isOpen, onClose, onCompleted }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [currentChoice, setCurrentChoice] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [results, setResults] = useState<{
-    score: number;
-    total: number;
-    percent: number;
-    assignedLevel: string;
-    categoryScores: Record<string, number>;
-  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<Results | null>(null);
 
   if (!isOpen) return null;
 
   const currentQ = DIAGNOSTIC_QUESTIONS[currentIndex];
+  const isLastQuestion = currentIndex === DIAGNOSTIC_QUESTIONS.length - 1;
 
   function handleNext() {
     if (currentChoice === null) return;
+    setError(null);
     const updated = [...selectedAnswers, currentChoice];
     setSelectedAnswers(updated);
     setCurrentChoice(null);
@@ -48,25 +55,78 @@ export default function DiagnosticModal({ isOpen, onClose, onCompleted }: Props)
     if (currentIndex < DIAGNOSTIC_QUESTIONS.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
-      // Complete! Submit diagnostic
       submitDiagnostic(updated);
     }
   }
 
+  function handleBack() {
+    if (currentIndex === 0) return;
+    setError(null);
+    // Restore the previous answer
+    const prevAnswers = [...selectedAnswers];
+    const prevAnswer = prevAnswers.pop();
+    setSelectedAnswers(prevAnswers);
+    if (prevAnswer !== undefined) setCurrentChoice(prevAnswer);
+    setCurrentIndex(prev => prev - 1);
+  }
+
   async function submitDiagnostic(finalAnswers: number[]) {
     setSubmitting(true);
+    setError(null);
+
+    // Compute results locally first (works for both guests and authenticated users)
+    let score = 0;
+    const categoryScores: Record<string, { correct: number; total: number }> = {};
+    DIAGNOSTIC_QUESTIONS.forEach((q, index) => {
+      const userAns = finalAnswers[index];
+      const isCorrect = userAns === q.answer;
+      if (isCorrect) score += 1;
+      if (!categoryScores[q.category]) {
+        categoryScores[q.category] = { correct: 0, total: 0 };
+      }
+      categoryScores[q.category].total += 1;
+      if (isCorrect) categoryScores[q.category].correct += 1;
+    });
+
+    const percent = Math.round((score / DIAGNOSTIC_QUESTIONS.length) * 100);
+    let assignedLevel: string = "Beginner";
+    if (percent >= 80) assignedLevel = "Advanced";
+    else if (percent >= 50) assignedLevel = "Developing";
+
+    const categoryPercents: Record<string, number> = {};
+    for (const [cat, data] of Object.entries(categoryScores)) {
+      categoryPercents[cat] = Math.round((data.correct / data.total) * 100);
+    }
+
+    const localResults: Results = {
+      score,
+      total: DIAGNOSTIC_QUESTIONS.length,
+      percent,
+      assignedLevel,
+      categoryScores: categoryPercents,
+    };
+
+    // Try to persist to the server (if authenticated). If it fails, use local results anyway.
     try {
       const res = await fetch("/api/diagnostic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ answers: finalAnswers }),
       });
-      const data = await res.json();
       if (res.ok) {
+        const data = await res.json();
         setResults(data);
         onCompleted(data.assignedLevel, data.categoryScores);
+      } else {
+        // API failed (maybe not authenticated, or DB error) — use local results
+        setResults(localResults);
+        onCompleted(assignedLevel, categoryPercents);
       }
-    } catch {}
+    } catch {
+      // Network error — use local results
+      setResults(localResults);
+      onCompleted(assignedLevel, categoryPercents);
+    }
     setSubmitting(false);
   }
 
@@ -75,122 +135,170 @@ export default function DiagnosticModal({ isOpen, onClose, onCompleted }: Props)
     setSelectedAnswers([]);
     setCurrentChoice(null);
     setResults(null);
+    setError(null);
+  }
+
+  function handleClose() {
+    restart();
+    onClose();
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="diagnostic-modal-card" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="modal-close-btn" aria-label="Close">
+    <div className="modal-backdrop" onClick={handleClose}>
+      <div className="diagnostic-modal" onClick={e => e.stopPropagation()}>
+        {/* Close button — always visible */}
+        <button className="diagnostic-close-btn" onClick={handleClose} title="Close">
           <X size={20} />
         </button>
 
         {!results ? (
-          <div>
-            <div className="diag-header">
-              <div className="diag-icon">
-                <Compass size={24} />
+          <>
+            {/* Header */}
+            <div className="diagnostic-header">
+              <div className="diagnostic-badge">
+                <Compass size={14} /> ADAPTIVE PLACEMENT ENGINE
               </div>
-              <div>
-                <span className="diag-kicker">ADAPTIVE PLACEMENT ENGINE</span>
-                <h2>Diagnostic Assessment</h2>
-                <p>
-                  Question {currentIndex + 1} of {DIAGNOSTIC_QUESTIONS.length} · {currentQ.category}
-                </p>
+              <h2>Diagnostic Assessment</h2>
+              <p>Question {currentIndex + 1} of {DIAGNOSTIC_QUESTIONS.length} · {currentQ.category}</p>
+              {/* Progress bar */}
+              <div className="diagnostic-progress-bar">
+                <div
+                  className="diagnostic-progress-fill"
+                  style={{ width: `${((currentIndex + 1) / DIAGNOSTIC_QUESTIONS.length) * 100}%` }}
+                />
               </div>
             </div>
 
-            {/* Progress track */}
-            <div className="diag-progress-bar">
-              <div
-                style={{
-                  width: `${((currentIndex + 1) / DIAGNOSTIC_QUESTIONS.length) * 100}%`
-                }}
-              />
-            </div>
-
-            {/* Question Card */}
-            <div className="diag-question-box">
+            {/* Question */}
+            <div className="diagnostic-question-body">
               <h3>{currentQ.question}</h3>
-              <div className="diag-options-list">
+              <div className="diagnostic-choices">
                 {currentQ.options.map((option, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentChoice(idx)}
-                    className={`diag-option-btn ${currentChoice === idx ? "selected" : ""}`}
+                    className={`diagnostic-choice ${currentChoice === idx ? "selected" : ""}`}
                   >
-                    <span className="option-letter">{String.fromCharCode(65 + idx)}</span>
-                    <span className="option-text">{option}</span>
+                    <span className="choice-letter">{String.fromCharCode(65 + idx)}</span>
+                    <span>{option}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="diag-footer">
-              <span className="diag-note">
-                <ShieldCheck size={15} /> Your responses determine your initial unlocked modules.
-              </span>
+            {/* Error message */}
+            {error && (
+              <div className="diagnostic-error-banner">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="diagnostic-actions">
+              <button
+                onClick={handleBack}
+                disabled={currentIndex === 0 || submitting}
+                className="diagnostic-btn-secondary"
+              >
+                Back
+              </button>
               <button
                 onClick={handleNext}
                 disabled={currentChoice === null || submitting}
-                className="diag-next-btn"
+                className="diagnostic-btn-primary"
               >
-                {currentIndex < DIAGNOSTIC_QUESTIONS.length - 1 ? (
-                  <>Continue <ArrowRight size={16} /></>
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Evaluating...
+                  </>
+                ) : isLastQuestion ? (
+                  <>
+                    Submit & See Results <ArrowRight size={16} />
+                  </>
                 ) : (
-                  <>{submitting ? "Evaluating..." : "Complete Assessment"} <Sparkles size={16} /></>
+                  <>
+                    Continue <ArrowRight size={16} />
+                  </>
                 )}
               </button>
             </div>
-          </div>
+          </>
         ) : (
-          /* Results Evaluation Screen */
-          <div className="diag-results-layout">
-            <div className="results-badge">
-              <Award size={28} />
-            </div>
-            <span className="diag-kicker">ASSESSMENT COMPLETE</span>
-            <h2>Your Learning Profile: Persona {results.assignedLevel === "Beginner" ? "A" : results.assignedLevel === "Developing" ? "B" : "C"}</h2>
-            <p className="results-subtitle">
-              You scored <strong>{results.score} of {results.total} ({results.percent}%)</strong>. We have tailored your academy learning dashboard accordingly.
-            </p>
-
-            <div className="persona-highlight-box">
-              <h4>
-                {results.assignedLevel === "Beginner" && "Persona A: Complete Beginner"}
-                {results.assignedLevel === "Developing" && "Persona B: Developing Learner"}
-                {results.assignedLevel === "Advanced" && "Persona C: Advanced Practitioner"}
-              </h4>
-              <p>
-                {results.assignedLevel === "Beginner" && "We recommend starting from Chapter 01 (Forex Foundations) to solidify quote conventions, pip calculations, and risk discipline."}
-                {results.assignedLevel === "Developing" && "You demonstrated good foundational literacy! We have unlocked intermediate technical analysis and risk management simulation labs."}
-                {results.assignedLevel === "Advanced" && "Outstanding mastery! You have unlocked all foundational modules and can immediately engage in historical market replay and drawdown testing."}
-              </p>
+          <>
+            {/* Results screen */}
+            <div className="diagnostic-results-header">
+              <div className={`diagnostic-level-badge ${results.assignedLevel.toLowerCase()}`}>
+                <Award size={20} />
+                <span>{results.assignedLevel}</span>
+              </div>
+              <h2>Diagnostic Complete!</h2>
+              <p>You scored {results.score} / {results.total} ({results.percent}%)</p>
             </div>
 
-            {/* Category Scores */}
-            <div className="category-scores-grid">
-              {Object.entries(results.categoryScores).map(([cat, score]) => (
-                <div key={cat} className="cat-score-row">
-                  <div className="cat-label">
+            <div className="diagnostic-results-body">
+              <div className="diagnostic-score-ring">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#e3ebe0" strokeWidth="8" />
+                  <circle
+                    cx="60" cy="60" r="50" fill="none"
+                    stroke={results.percent >= 80 ? "#5fbf6f" : results.percent >= 50 ? "#ffd43b" : "#ff8787"}
+                    strokeWidth="8" strokeLinecap="round"
+                    strokeDasharray={`${(results.percent / 100) * 314.2} 314.2`}
+                    transform="rotate(-90 60 60)"
+                  />
+                  <text x="60" y="58" textAnchor="middle" fontSize="24" fontWeight="700" fill="#163832" fontFamily="Manrope, sans-serif">
+                    {results.percent}%
+                  </text>
+                  <text x="60" y="76" textAnchor="middle" fontSize="10" fill="#7c8b86" fontFamily="DM Sans, sans-serif">
+                    {results.score}/{results.total}
+                  </text>
+                </svg>
+              </div>
+
+              <div className="diagnostic-category-scores">
+                <h4>Category Breakdown</h4>
+                {Object.entries(results.categoryScores).map(([cat, pct]) => (
+                  <div key={cat} className="diagnostic-category-row">
                     <span>{cat}</span>
-                    <strong>{score}%</strong>
+                    <div className="diagnostic-category-bar">
+                      <div
+                        className="diagnostic-category-fill"
+                        style={{
+                          width: `${pct}%`,
+                          background: pct >= 80 ? "#5fbf6f" : pct >= 50 ? "#ffd43b" : "#ff8787",
+                        }}
+                      />
+                    </div>
+                    <strong>{pct}%</strong>
                   </div>
-                  <div className="cat-bar">
-                    <div style={{ width: `${score}%` }} />
-                  </div>
+                ))}
+              </div>
+
+              <div className="diagnostic-next-steps">
+                <Sparkles size={16} />
+                <div>
+                  <strong>What happens next?</strong>
+                  <p>
+                    {results.assignedLevel === "Advanced"
+                      ? "You've been placed ahead! Some beginner lessons are auto-unlocked. Start with the next available lesson in your path."
+                      : results.assignedLevel === "Developing"
+                      ? "You have a solid foundation. Review any gaps in the category breakdown above, then continue with the next lesson."
+                      : "Welcome! Start with the first lesson in Forex Foundations — you'll build each skill step by step."}
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
 
-            <div className="results-actions">
-              <button onClick={restart} className="diag-restart-btn">
-                <RotateCcw size={15} /> Retake Diagnostic
+            <div className="diagnostic-results-actions">
+              <button onClick={restart} className="diagnostic-btn-secondary">
+                <RotateCcw size={14} /> Retake
               </button>
-              <button onClick={onClose} className="diag-finish-btn">
-                Go to Tailored Dashboard <ArrowRight size={16} />
+              <button onClick={handleClose} className="diagnostic-btn-primary">
+                Continue to Lessons <ArrowRight size={16} />
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>

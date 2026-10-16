@@ -4504,3 +4504,307 @@ a { text-decoration: none; color: inherit; }
   .roadmap-lesson-row { grid-template-columns: 28px 1fr auto; gap: 8px; }
   .roadmap-lesson-body p { display: none; }
 }
+
+/* ============================================================
+   PHASE 6 — Diagnostic Modal rewrite + Quiz error handling
+   ============================================================ */
+
+/* Diagnostic modal — rewritten with close button, error handling, results screen */
+.diagnostic-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  padding: 32px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+}
+.diagnostic-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f5f9f3;
+  border: 1px solid #e3ebe0;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #6b8174;
+  z-index: 10;
+  transition: all 0.2s ease;
+}
+.diagnostic-close-btn:hover { background: #eef3ec; color: #2a4535; }
+
+.diagnostic-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.diagnostic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #2a6a52;
+  text-transform: uppercase;
+  background: #f3faee;
+  border: 1px solid #cde3c4;
+  border-radius: 10px;
+  padding: 4px 10px;
+  margin-bottom: 10px;
+}
+.diagnostic-header h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  color: #163832;
+  margin: 0 0 4px;
+}
+.diagnostic-header p {
+  font-size: 12px;
+  color: #6b8174;
+  margin: 0 0 12px;
+}
+.diagnostic-progress-bar {
+  height: 4px;
+  background: #eef3ec;
+  border-radius: 2px;
+  overflow: hidden;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.diagnostic-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c9ed85, #5fbf6f);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.diagnostic-question-body h3 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  color: #163832;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+.diagnostic-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.diagnostic-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f7faf5;
+  border: 2px solid #e3ebe0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  font-size: 13px;
+  color: #2c4438;
+}
+.diagnostic-choice:hover {
+  border-color: #b3d9a8;
+  background: #f3faee;
+}
+.diagnostic-choice.selected {
+  border-color: #5fbf6f;
+  background: #f3faee;
+  box-shadow: 0 0 0 1px rgba(95, 191, 111, 0.2);
+}
+.choice-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e3ebe0;
+  color: #4a6357;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.diagnostic-choice.selected .choice-letter {
+  background: #5fbf6f;
+  color: white;
+}
+
+.diagnostic-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff5f5;
+  border: 1px solid #ffc9c9;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #c43c3c;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.diagnostic-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.diagnostic-btn-primary,
+.diagnostic-btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 0;
+}
+.diagnostic-btn-primary {
+  background: #1d4d3a;
+  color: white;
+}
+.diagnostic-btn-primary:hover:not(:disabled) { background: #2a6a52; }
+.diagnostic-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.diagnostic-btn-secondary {
+  background: transparent;
+  color: #6b8174;
+  border: 1px solid #dde6db;
+}
+.diagnostic-btn-secondary:hover:not(:disabled) { background: #f5f9f3; }
+.diagnostic-btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Results screen */
+.diagnostic-results-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.diagnostic-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.diagnostic-level-badge.beginner { background: #e3ebe0; color: #4a6357; }
+.diagnostic-level-badge.developing { background: #fff3bf; color: #8a6500; }
+.diagnostic-level-badge.advanced { background: #d4f0d9; color: #2f7a3d; }
+.diagnostic-results-header h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 22px;
+  color: #163832;
+  margin: 0 0 4px;
+}
+.diagnostic-results-header p {
+  font-size: 13px;
+  color: #6b8174;
+  margin: 0;
+}
+
+.diagnostic-results-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.diagnostic-score-ring {
+  display: flex;
+  justify-content: center;
+}
+.diagnostic-category-scores {
+  width: 100%;
+}
+.diagnostic-category-scores h4 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: #163832;
+  margin: 0 0 10px;
+}
+.diagnostic-category-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 40px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 12px;
+  color: #4a6357;
+}
+.diagnostic-category-bar {
+  height: 6px;
+  background: #eef3ec;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.diagnostic-category-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.diagnostic-category-row strong {
+  text-align: right;
+  color: #163832;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.diagnostic-next-steps {
+  display: flex;
+  gap: 10px;
+  background: #f3faee;
+  border: 1px solid #cde3c4;
+  border-radius: 10px;
+  padding: 14px;
+  width: 100%;
+}
+.diagnostic-next-steps > svg { color: #2a6a52; flex-shrink: 0; margin-top: 2px; }
+.diagnostic-next-steps strong {
+  display: block;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  color: #163832;
+  margin-bottom: 4px;
+}
+.diagnostic-next-steps p {
+  font-size: 12px;
+  color: #4a6357;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.diagnostic-results-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Quiz error notice (inside InteractiveLessonPlayer feedback box) */
+.quiz-error-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff5f5;
+  border: 1px solid #ffc9c9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  font-size: 11px;
+  color: #c43c3c;
+}
+
+@media (max-width: 768px) {
+  .diagnostic-modal { padding: 20px 16px; }
+  .diagnostic-category-row { grid-template-columns: 80px 1fr 36px; gap: 6px; }
+}

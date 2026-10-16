@@ -25,7 +25,9 @@ import {
   Zap,
   HelpCircle,
   Flame,
-  ArrowRight
+  ArrowRight,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import type { Lesson } from "@/lib/curriculum";
 import { isUnlocked } from "@/lib/curriculum";
@@ -74,6 +76,7 @@ export default function InteractiveLessonPlayer({
   const [isCorrect, setIsCorrect] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showXpCelebration, setShowXpCelebration] = useState(false);
+  const [quizError, setQuizError] = useState<string | null>(null);
 
   // Interactive Chart Scenario State
   const [selectedCandleIdx, setSelectedCandleIdx] = useState<number>(6); // Focus on key pinbar
@@ -191,12 +194,29 @@ export default function InteractiveLessonPlayer({
   async function handleQuizSubmit() {
     if (selectedAnswer === null || isSubmitting) return;
     setIsSubmitting(true);
-    const passed = await onCompleteLesson(lesson.id, selectedAnswer);
-    setIsCorrect(passed);
-    setQuizSubmitted(true);
-    if (passed) {
-      setShowXpCelebration(true);
-      setTimeout(() => setShowXpCelebration(false), 3500);
+    setQuizError(null);
+    try {
+      const passed = await onCompleteLesson(lesson.id, selectedAnswer);
+      setIsCorrect(passed);
+      setQuizSubmitted(true);
+      if (passed) {
+        setShowXpCelebration(true);
+        setTimeout(() => setShowXpCelebration(false), 3500);
+      } else {
+        // Check if the answer was actually wrong, or if the API failed
+        const correctIdx = lesson.answer;
+        if (selectedAnswer !== correctIdx) {
+          setQuizError(null); // Wrong answer — show "try again" feedback, not an error
+        } else {
+          // Answer was correct but API failed — show error
+          setQuizError("Your answer is correct, but we couldn't save your progress to the server. Your completion is saved locally — you can continue.");
+          setIsCorrect(true); // Treat as correct since the answer was right
+          setShowXpCelebration(true);
+          setTimeout(() => setShowXpCelebration(false), 3500);
+        }
+      }
+    } catch (err) {
+      setQuizError("Something went wrong submitting your answer. Please try again.");
     }
     setIsSubmitting(false);
   }
@@ -403,6 +423,14 @@ export default function InteractiveLessonPlayer({
                 </div>
                 <p>{lesson.explanation}</p>
 
+                {/* Error message (shown if API failed but answer was correct) */}
+                {quizError && (
+                  <div className="quiz-error-notice">
+                    <AlertCircle size={14} />
+                    <span>{quizError}</span>
+                  </div>
+                )}
+
                 {isCorrect ? (
                   <div className="feedback-cta-row">
                     {nextLesson ? (
@@ -420,6 +448,7 @@ export default function InteractiveLessonPlayer({
                     onClick={() => {
                       setQuizSubmitted(false);
                       setSelectedAnswer(null);
+                      setQuizError(null);
                     }}
                     className="btn-retry-quiz"
                   >
